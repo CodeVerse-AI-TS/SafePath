@@ -1,0 +1,53 @@
+{
+  "name": "safepath",
+  "version": "1.0.0",
+  "description": "SafePath - safety-aware walking route planner for Mysuru (safe path prediction). All safety scores are estimates from reported data, not guarantees.",
+  "main": "server/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "bootstrap": "npm run seed && npm run ds:build",
+    "dev": "node --watch server/index.js",
+    "ds:build": "node ds/build.js",
+    "import": "node data/import.js",
+    "osm:pull": "node data/overpass.js",
+    "seed": "node data/seed.js",
+    "test": "node --test test/*.test.js",
+    "test:acceptance": "node test/acceptance.js",
+    "test:all": "node test/run-all.js",
+    "test:auth": "node test/auth.smoke.js",
+    "test:autocomplete": "node test/autocomplete.smoke.js",
+    "test:coverage": "node test/coverage.smoke.js",
+    "test:glass": "node test/glass-panels.smoke.js",
+    "test:home-nav": "node test/home-nav.smoke.js",
+    "test:interaction": "node test/interaction.smoke.js",
+    "test:map": "node test/map.smoke.js",
+    "test:nav": "node test/nav_math.test.js && node test/nav_steps.test.js",
+    "test:navigation": "node test/navigation.smoke.js",
+    "test:pwa": "node test/pwa.smoke.js",
+    "test:unit": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeVerse-AI-TS/AI-Assistant-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CodeVerse-AI-TS/AI-Assistant-/issues"
+  },
+  "homepage": "https://github.com/CodeVerse-AI-TS/AI-Assistant-#readme",
+  "dependencies": {
+    "express": "^4.22.3"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^21.11.0"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
