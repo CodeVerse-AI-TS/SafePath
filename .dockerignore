@@ -1,0 +1,33 @@
+# Keep the build context small and free of local state.
+.git
+.gitignore
+
+# Dependencies and build output — installed inside the image instead.
+node_modules
+web/node_modules
+web/dist
+
+# Local database and generated data. The image seeds its own copy on first
+# boot; mounting the host's database into the image would be a mistake.
+data/safepath.db
+data/safepath.db-shm
+data/safepath.db-wal
+data/cache
+data/hotspots.json
+data/model.json
+public/hotspots.json
+
+# Tests and docs are not needed at runtime.
+test
+*.md
+!README.md
+
+# Local environment and editor state.
+.env
+.env.*
+.vscode
+.DS_Store
+
+# The separate React workspace has its own toolchain and is not served by
+# the Express app, so it is left out of the runtime image entirely.
+web
