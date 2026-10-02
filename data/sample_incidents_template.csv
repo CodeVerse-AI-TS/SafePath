@@ -1,0 +1,6 @@
+lat,lng,type,severity,timestamp,source,verified,note
+12.976700,77.571300,harassment,4,2024-11-08 21:40,police_export,1,example row - replace with real data
+12.935200,77.624500,snatching,3,2024-10-22 22:15,police_export,1,example row - replace with real data
+12.963400,77.576300,theft,2,2024-09-30 13:05,community,0,example row - replace with real data
+12.977900,77.566000,stalking,4,2024-12-01 23:10,police_export,1,example row - replace with real data
+12.971900,77.641200,obstruction,1,2024-12-12 08:30,community,0,example row - replace with real data
