@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- Matches --bg in styles.css (the dark forest theme). -->
+<meta name="theme-color" content="#101114" />
+<meta name="color-scheme" content="dark" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SafePath" />
+<title>SafePath — free safer walking routes in Mysuru</title>
+<meta name="description" content="SafePath is a free public tool that compares walking routes in Mysuru using reported safety signals. Estimates only — not a guarantee of safety." />
+<meta name="keywords" content="Mysuru walking routes, safer walking route, community safety, public safety map, SafePath" />
+<meta name="robots" content="index, follow" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="SafePath" />
+<meta property="og:title" content="SafePath — free safer walking routes in Mysuru" />
+<meta property="og:description" content="Compare walking routes in Mysuru using reported safety signals. Free for everyone; estimates only." />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="SafePath — free safer walking routes in Mysuru" />
+<meta name="twitter:description" content="A free public route planner for comparing reported safety signals in Mysuru." />
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebApplication",
+  "name":"SafePath",
+  "applicationCategory":"TravelApplication",
+  "description":"A free public tool for comparing walking routes in Mysuru using reported safety signals.",
+  "areaServed":"Mysuru, Karnataka, India",
+  "isAccessibleForFree":true,
+  "operatingSystem":"Any"
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e2d2b'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='15' font-weight='700' text-anchor='middle' fill='%23f8f6f0'%3ESP%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__mark" aria-hidden="true">SP</div>
+      <div>
+        <div class="brand__name">SafePath</div>
+        <div class="brand__tag">Mysuru</div>
+      </div>
+    </div>
+    <div class="topbar__spacer"></div>
+    <span class="chip chip--sample" id="dataChip" title="Which data the app is running on">sample data</span>
+    <span class="chip" title="SafePath is free for everyone">free public tool</span>
+    <span class="chip" id="modelChip" title="Model build time">model —</span>
+
+    <!-- Optional accounts. A guest sees a Sign in button; a signed-in user
+         sees their name and Sign out. Navigation never depends on this. -->
+    <div class="authbar" id="authBar">
+      <button class="btn btn--sm authbar__signin" id="authSignInBtn" type="button">Sign in</button>
+      <div class="authbar__user" id="authUser" hidden>
+        <span class="authbar__avatar" id="authAvatar" aria-hidden="true"></span>
+        <span class="authbar__name" id="authName"></span>
+        <button class="btn btn--sm btn--ghost" id="authMenuBtn" type="button"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="authMenu"
+                aria-label="Account menu">Account</button>
+        <div class="authbar__menu" id="authMenu" role="menu" hidden>
+          <button class="authbar__item" id="authContactsBtn" role="menuitem" type="button">Emergency contacts</button>
+          <button class="authbar__item" id="authPrivacyMenuBtn" role="menuitem" type="button">Privacy &amp; my data</button>
+          <button class="authbar__item authbar__item--danger" id="authSignOutBtn" role="menuitem" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-overview" aria-controls="page-overview" aria-selected="true"><span class="tab__dot"></span>Overview</button>
+    <button class="tab" role="tab" id="tab-route" aria-controls="page-route" aria-selected="false"><span class="tab__dot"></span>Safe Routes</button>
+    <button class="tab" role="tab" id="tab-report" aria-controls="page-report" aria-selected="false"><span class="tab__dot"></span>Reports</button>
+    <button class="tab" role="tab" id="tab-live" aria-controls="page-live" aria-selected="false"><span class="tab__dot"></span>Live Alerts</button>
+    <button class="tab" role="tab" id="tab-signals" aria-controls="page-signals" aria-selected="false"><span class="tab__dot"></span>Dashboard</button>
+  </nav>
+
+  <main id="main">
+    <!-- ============================ OVERVIEW ============================ -->
+    <section class="page" id="page-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero__copy">
+          <p class="hero__eyebrow"><span class="hero__eyebrowDot"></span>Free public safety tool · Mysuru</p>
+          <h1 class="hero__title" id="heroTitle"><span>Move Freely.</span><span>Feel Safer.</span></h1>
+          <p class="hero__lead">Intelligent routes. Real-time safety alerts. A smarter way to navigate your surroundings.</p>
+          <div class="hero__actions">
+            <button class="btn btn--primary" id="heroPlanBtn" type="button">Find a Safe Route <span aria-hidden="true">↗</span></button>
+            <button class="btn btn--ghost hero__secondary" id="heroExploreBtn" type="button">Explore SafePath <span aria-hidden="true">↓</span></button>
+          </div>
+          <p class="hero__trust"><span aria-hidden="true">✦</span> Uses reported community signals to compare routes. Estimates only — never a guarantee of safety.</p>
+        </div>
+        <div class="hero__visual" aria-label="Illustration of a safer route through Mysuru">
+          <div class="hero__ambient"></div>
+          <div class="hero__map" aria-hidden="true">
+            <div class="hero__mapLabel">MYSURU / LIVE ROUTE VIEW</div>
+            <div class="hero__road hero__road--one"></div>
+            <div class="hero__road hero__road--two"></div>
+            <div class="hero__routeLine"></div>
+            <span class="hero__marker hero__marker--start">A</span>
+            <span class="hero__marker hero__marker--end">B</span>
+          </div>
+          <div class="hero-card hero-card--route"><span class="hero-card__icon">↗</span><span><b>Safest route</b><small>Low reported risk · 24 min</small></span><strong>01</strong></div>
+          <div class="hero-card hero-card--alert"><span class="hero-card__pulse"></span><span><b>Nearby alert</b><small>Community signal · 110 m</small></span></div>
+          <div class="hero-card hero-card--hotspot"><span class="hero-card__icon">◌</span><span><b>Area signal</b><small>Reported data only</small></span></div>
+        </div>
+      </section>
+      <div class="hero__scroll" aria-hidden="true"><span></span>Scroll to plan your route</div>
+
+      <div class="grid grid--route">
+        <div style="display:grid;gap:14px">
+          <div class="card">
+            <div class="card__head"><h2 class="card__title">Your route</h2><span class="card__sub">Mysuru</span></div>
+            <div class="field">
+              <label for="fromInput">From</label>
+              <div class="row">
+                <input id="fromInput" type="text" placeholder="e.g. Mysore Palace, or 12.31,76.66" autocomplete="off" />
+                <button class="btn btn--sm" id="useLocationBtn" type="button" title="Use my current location" aria-label="Use my current location">◎</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="toInput">To</label>
+              <input id="toInput" type="text" placeholder="e.g. Kuvempunagar, or 12.29,76.63" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="departInput">Departure time</label>
+              <select id="departInput" data-glass-select>
+                <option value="now" selected>Leave now</option>
+                <option value="custom">Custom time…</option>
+              </select>
+            </div>
+            <div class="field" id="customTimeField" hidden>
+              <label for="customTimeInput">Leaving at</label>
+              <input id="customTimeInput" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="lambdaInput">Safety vs speed</label>
+              <input id="lambdaInput" class="slider" type="range" min="0" max="5" step="0.5" value="1.5"
+                     aria-describedby="lambdaLabels" />
+              <div class="slider-labels" id="lambdaLabels"><span>Fastest</span><span>Balanced</span><span>Safest</span></div>
+            </div>
+            <button class="btn btn--primary btn--block" id="planBtn" type="button" aria-label="Find safe routes between the two places">Find safe routes</button>
+            <p class="disclaimer">Estimate based on reported data, not a guarantee of safety.</p>
+          </div>
+
+          <div class="card" id="modeCard">
+            <div class="card__head"><h2 class="card__title">Travel mode</h2></div>
+            <div class="seg" role="group" aria-label="Travel mode">
+              <button type="button" data-mode="walk" aria-pressed="true">Walk</button>
+              <button type="button" data-mode="cycle" aria-pressed="false">Cycle</button>
+              <button type="button" data-mode="drive" aria-pressed="false">Drive</button>
+            </div>
+            <p class="card__sub" style="margin-top:10px">Walking is the default. Personal safety is most relevant on foot, and walking routes can use paths cars cannot.</p>
+          </div>
+        </div>
+
+        <div class="map-wrap">
+          <div id="map" role="application" aria-label="Map of Mysuru showing hotspots and routes"></div>
+          <div class="map-fallback" id="mapFallback" hidden>
+            <strong>Map could not load.</strong>
+            <span>Check your connection and reload the page.</span>
+          </div>
+          <div class="map-search">
+            <label class="sr-only" for="mapSearchInput">Search for a place on the map</label>
+            <input id="mapSearchInput" type="text" placeholder="Search a place…" autocomplete="off" />
+          </div>
+          <div class="map-overlay map-overlay--tl">
+            <button class="btn btn--sm" id="heatToggle" type="button" aria-pressed="false">Risk heatmap</button>
+            <button class="btn btn--sm" id="hotspotToggle" type="button" aria-pressed="true">Hotspots</button>
+            <button class="btn btn--sm" id="lampToggle" type="button" aria-pressed="false">Street lamps</button>
+            <button class="btn btn--sm" id="helpToggle" type="button" aria-pressed="false">Help points</button>
+          </div>
+          <div class="map-overlay map-overlay--tr">
+            <span class="status-pill" id="mapStatus" role="status" aria-live="polite">Ready</span>
+          </div>
+          <div class="map-overlay map-overlay--bl">
+            <span class="legend">
+              <span class="legend__sw" style="background:var(--safe)"></span>low
+              <span class="legend__sw" style="background:var(--amber)"></span>medium
+              <span class="legend__sw" style="background:var(--danger)"></span>high risk
+            </span>
+          </div>
+          <div class="map-overlay map-overlay--br">
+            <button class="btn btn--sm" id="recenterBtn" type="button" title="Recenter on Mysuru" aria-label="Recenter the map on Mysuru">Recenter</button>
+            <button class="btn btn--sm" id="overviewLocBtn" type="button" title="Centre the map on your location">Use my location</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== SAFE ROUTE =========================== -->
+    <section class="page" id="page-route" role="tabpanel" aria-labelledby="tab-route" hidden>
+      <h1 class="section-title">Route options</h1>
+      <p class="section-sub" id="routeSummary">Plan a route from the Overview tab to compare options here.</p>
+      <div class="grid grid--route">
+        <div style="display:grid;gap:14px">
+          <div class="card">
+            <div class="card__head"><h2 class="card__title">Options</h2><span class="card__sub" id="candidateCount"></span></div>
+            <div class="routes" id="routeCards">
+              <p class="feed__empty">No routes yet. Enter a start and destination, then choose “Find safe routes”.</p>
+            </div>
+          </div>
+          <div class="card" id="whyCard" hidden>
+            <div class="card__head"><h2 class="card__title">Why this route</h2><span class="card__sub" id="whyRole"></span></div>
+            <ul class="reasons" id="whyList"></ul>
+            <p class="disclaimer">Estimate based on reported data, not a guarantee of safety.</p>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <div id="map2" role="application" aria-label="Map showing the three routes, the selected one coloured by segment risk"></div>
+          <div class="map-fallback" id="mapFallback2" hidden>
+            <strong>Map could not load.</strong>
+            <span>Check your connection and reload the page.</span>
+          </div>
+          <div class="map-overlay map-overlay--tl">
+            <button class="btn btn--sm" id="heatToggle2" type="button" aria-pressed="false">Risk heatmap</button>
+            <button class="btn btn--sm" id="hotspotToggle2" type="button" aria-pressed="true">Hotspots</button>
+            <button class="btn btn--sm" id="lampToggle2" type="button" aria-pressed="false">Street lamps</button>
+            <button class="btn btn--sm" id="helpToggle2" type="button" aria-pressed="false">Help points</button>
+          </div>
+          <div class="map-overlay map-overlay--tr">
+            <span class="status-pill" id="routeStatus" role="status" aria-live="polite">Ready</span>
+          </div>
+          <div class="map-overlay map-overlay--bl">
+            <span class="legend">
+              <span class="legend__sw legend__sw--line" style="background:var(--safe)"></span>Safest
+              <span class="legend__sw legend__sw--line" style="background:var(--amber)"></span>Balanced
+              <span class="legend__sw legend__sw--line" style="background:var(--info)"></span>Fastest
+              <span class="legend__sw" style="background:var(--danger);border-radius:50%"></span>hotspot
+            </span>
+          </div>
+          <div class="map-overlay map-overlay--br">
+            <button class="btn btn--sm" id="recenterBtn2" type="button" title="Zoom to fit the routes" aria-label="Zoom the map to fit all routes">Fit routes</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= REPORT ============================= -->
+    <section class="page" id="page-report" role="tabpanel" aria-labelledby="tab-report" hidden>
+      <h1 class="section-title">Report what you see</h1>
+      <p class="section-sub">Reports feed straight back into the risk estimate for that area. Locations are rounded to roughly 110 m so no precise personal location is stored.</p>
+      <div class="grid grid--route">
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">New report</h2></div>
+          <div class="field">
+            <label for="reportType">What are you reporting?</label>
+              <select id="reportType" class="report-select" data-glass-select>
+              <option value="low_lighting">Low lighting / dark stretch</option>
+              <option value="harassment">Harassment / eve-teasing</option>
+              <option value="unusual_activity">Unusual activity / loitering</option>
+              <option value="obstruction">Road obstruction / hazard</option>
+              <option value="other">Something else</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="reportLighting">Lighting (1 dark – 5 bright)</label>
+              <input id="reportLighting" type="range" min="1" max="5" step="1" value="3" class="slider" />
+            </div>
+            <div class="field">
+              <label for="reportCrowd">Crowd (1 empty – 5 busy)</label>
+              <input id="reportCrowd" type="range" min="1" max="5" step="1" value="3" class="slider" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="reportNote">Note (optional)</label>
+            <textarea id="reportNote" maxlength="500" placeholder="Briefly describe what you saw. Please do not include personal details."></textarea>
+          </div>
+          <div class="field">
+            <label>Location</label>
+            <div class="row">
+              <button class="btn btn--sm" id="reportPickBtn" type="button">Pick on map</button>
+              <button class="btn btn--sm" id="reportHereBtn" type="button">Use my location</button>
+            </div>
+            <p class="card__sub mono" id="reportLocText" style="margin-top:8px">No location chosen yet.</p>
+          </div>
+          <button class="btn btn--primary btn--block" id="reportSubmitBtn" type="button">Submit report</button>
+          <div id="reportResult" style="margin-top:10px"></div>
+          <p class="disclaimer">Reports are community signals, not verified facts. Locations are area-level only.</p>
+        </div>
+        <div class="map-wrap">
+          <div id="map3" role="application" aria-label="Map for placing a report"></div>
+          <div class="map-fallback" id="mapFallback3" hidden>
+            <strong>Map could not load.</strong>
+            <span>Check your connection and reload the page.</span>
+          </div>
+          <div class="map-overlay map-overlay--tr">
+            <span class="status-pill" id="reportStatus" role="status" aria-live="polite">Tap the map to place a pin</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ LIVE DESK =========================== -->
+    <section class="page" id="page-live" role="tabpanel" aria-labelledby="tab-live" hidden>
+      <h1 class="section-title">Live desk</h1>
+      <p class="section-sub">New community reports and panic alerts appear here as they arrive.</p>
+      <div class="grid grid--two">
+        <div class="card">
+          <div class="card__head">
+            <h2 class="card__title">Incoming reports</h2>
+            <span class="status-pill" id="liveStatus" role="status" aria-live="polite"><span class="spinner"></span>connecting…</span>
+          </div>
+          <ul class="feed" id="liveFeed" aria-live="polite"><li class="feed__empty">Waiting for reports…</li></ul>
+        </div>
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Alerts</h2><span class="card__sub" id="alertMode"></span></div>
+          <ul class="feed" id="alertFeed"><li class="feed__empty">No alerts yet.</li></ul>
+          <div id="alertChannels" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div class="grid grid--route" style="margin-top:14px">
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Emergency alert</h2></div>
+          <div class="panic">
+            <button class="panic__btn" id="panicBtn" type="button" aria-describedby="panicHelp">
+              <svg class="panic__ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6" id="panicRing"></circle></svg>
+              <span>HOLD 2s<small id="panicLabel">to alert</small></span>
+            </button>
+            <p id="panicHelp" class="card__sub" style="text-align:center;max-width:340px">
+              Press and hold for two seconds. Your area-level location is sent to your trusted circle.
+            </p>
+          </div>
+          <div id="panicResult"></div>
+        </div>
+
+        <!-- What happens after the hold: saved contacts (signed-in) or a
+             sign-in prompt (guest), plus Call 112 for everyone. -->
+        <div class="card" id="emergencyPanel">
+          <div class="card__head"><h2 class="card__title">Emergency actions</h2></div>
+
+          <!-- 112 first: it works for everyone, signed in or not, and it is the
+               only action on this panel that reaches a real human directly. -->
+          <div class="emergencycall">
+            <a class="btn btn--danger btn--block" id="call112Btn" href="tel:112">
+              Call 112 — emergency services
+            </a>
+            <p class="card__sub">
+              Opens your phone dialler. A web page cannot place the call for you.
+            </p>
+          </div>
+
+          <h3 class="emergency__subtitle">Choose how to alert your contacts</h3>
+
+          <!-- Guests are never blocked: they get the sign-in prompt AND 112. -->
+          <div class="notice notice--warn" id="emergencyGuest">
+            <b>Sign in to save emergency contacts</b> — then you can text or
+            WhatsApp them in one tap. You can still call 112 right now.
+            <button class="btn btn--sm" id="emergencySignInBtn" type="button">Sign in</button>
+          </div>
+
+          <div id="emergencyContacts" hidden>
+            <p class="card__sub" id="emergencyMessagePreview"></p>
+            <ul class="emergencylist" id="emergencyList"></ul>
+            <p class="contactlist__empty" id="emergencyEmpty" hidden>
+              No emergency contacts saved yet.
+              <button class="authsheet__linkbtn" id="emergencyManageBtn" type="button">Add one now</button>
+            </p>
+          </div>
+
+          <p class="card__sub" id="emergencyHonesty">
+            SafePath cannot send an SMS or WhatsApp message on your behalf. The
+            buttons above open your own messaging app with the text ready — you
+            press send.
+          </p>
+        </div>
+        <div class="map-wrap">
+          <div id="map4" role="application" aria-label="Map of live reports and alerts"></div>
+            <div class="map-fallback" id="mapFallback4" hidden>
+              <strong>Map could not load.</strong>
+              <span>Check your connection and reload the page.</span>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= SIGNALS ============================ -->
+    <section class="page" id="page-signals" role="tabpanel" aria-labelledby="tab-signals" hidden>
+      <h1 class="section-title">Signals</h1>
+      <p class="section-sub" id="signalsSource">Every number on this page is read from the SafePath database.</p>
+      <div class="stats" id="signalStats"></div>
+
+      <div class="grid grid--two" style="margin-top:14px">
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Incidents by time of day</h2></div>
+          <svg class="chart" id="chartTime" viewBox="0 0 320 180" role="img" aria-label="Bar chart of incidents by time of day"></svg>
+          <p class="card__sub" id="chartTimeNote"></p>
+        </div>
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Incidents by type</h2></div>
+          <svg class="chart" id="chartType" viewBox="0 0 320 180" role="img" aria-label="Bar chart of incidents by type"></svg>
+        </div>
+      </div>
+
+      <div class="grid grid--two" style="margin-top:14px">
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Monthly trend</h2><span class="card__sub">last 12 months</span></div>
+          <svg class="chart" id="chartTrend" viewBox="0 0 320 160" role="img" aria-label="Line chart of monthly incident counts"></svg>
+        </div>
+        <div class="card">
+          <div class="card__head"><h2 class="card__title">Top hotspots</h2><span class="card__sub" id="hotspotCount"></span></div>
+          <ul class="hotspot-list" id="hotspotList"><li class="feed__empty">Loading…</li></ul>
+          <p class="card__sub" style="margin-top:10px">Hotspots are clusters of reported incidents. They describe reported data, not the people who live in an area.</p>
+        </div>
+      </div>
+      <p class="disclaimer" style="margin-top:14px">Estimate based on reported data, not a guarantee of safety. Seeded data is clearly labelled synthetic sample data.</p>
+    </section>
+  </main>
+</div>
+
+    <!-- ====================== LIVE NAVIGATION (full screen) ============= -->
+    <section class="nav" id="navScreen" role="region" aria-label="Live navigation" hidden>
+      <div id="mapNav" class="nav__map" role="application" aria-label="Navigation map showing your position, heading and the remaining route"></div>
+      <div class="map-fallback" id="mapFallbackNav" hidden>
+        <strong>Map could not load.</strong>
+        <span>Check your connection and reload the page.</span>
+      </div>
+
+      <!-- next instruction banner -->
+      <div class="nav__banner" id="navBanner" role="status" aria-live="assertive" aria-atomic="true">
+        <span class="nav__icon" id="navIcon" aria-hidden="true">↑</span>
+        <div class="nav__bannerText">
+          <div class="nav__instruction" id="navInstruction">Waiting for GPS…</div>
+          <div class="nav__street" id="navStreet"></div>
+        </div>
+        <div class="nav__bannerDist mono" id="navStepDist"></div>
+      </div>
+
+      <!-- safety alert banner (hotspot / unlit ahead) -->
+      <div class="nav__alert" id="navAlert" role="alert" hidden>
+        <span class="nav__alertIcon" aria-hidden="true">!</span>
+        <span id="navAlertText"></span>
+        <button class="nav__alertDismiss" id="navAlertDismiss" type="button" aria-label="Dismiss this warning">×</button>
+      </div>
+
+      <!-- reroute prompt -->
+      <div class="nav__reroute" id="navReroute" role="alertdialog" aria-labelledby="navRerouteText" hidden>
+        <div id="navRerouteText">You have left the route.</div>
+        <div class="nav__rerouteRow">
+          <button class="btn btn--sm" id="navRerouteBtn" type="button">Reroute</button>
+          <button class="btn btn--sm btn--ghost" id="navRerouteIgnore" type="button">Ignore</button>
+        </div>
+      </div>
+
+      <!-- check-in prompt -->
+      <div class="nav__checkin" id="navCheckin" role="alertdialog" aria-labelledby="navCheckinText" hidden>
+        <div id="navCheckinText">You have been still for a while in a higher-risk area. Are you okay?</div>
+        <div class="nav__rerouteRow">
+          <button class="btn btn--sm" id="navCheckinOk" type="button">I'm okay</button>
+          <button class="btn btn--sm btn--danger" id="navCheckinHelp" type="button">Send alert</button>
+        </div>
+      </div>
+
+      <!-- map controls + emergency button: ONE flex column, so nothing can
+           overlap. SOS is last (closest to the thumb) and sits in normal flow. -->
+      <div class="nav__controls" id="navControls">
+        <div class="nav__mapBtns">
+          <button class="nav__ctrl" id="navNorthBtn" type="button" aria-pressed="false"
+                  aria-label="Map is heading up. Switch to north up." title="Map is heading up. Switch to north up.">
+            <span class="nav__ctrlIcon" aria-hidden="true">↑</span><span class="nav__ctrlText">heading-up</span>
+          </button>
+          <button class="nav__ctrl" id="navRecenterBtn" type="button"
+                  aria-label="Recenter the map on your position" title="Recenter on your position">
+            <span class="nav__ctrlIcon" aria-hidden="true">◎</span><span class="nav__ctrlText">Recenter</span>
+          </button>
+          <button class="nav__ctrl" id="navVoiceBtn" type="button" aria-pressed="true"
+                  aria-label="Voice guidance on" title="Voice guidance on">
+            <span class="nav__ctrlIcon" id="navVoiceIcon" aria-hidden="true">🔊</span><span class="nav__ctrlText">Voice</span>
+          </button>
+          <!-- Shown only on screens too short to fit the three controls above. -->
+          <button class="nav__ctrl nav__ctrl--more" id="navMoreBtn" type="button" hidden
+                  aria-haspopup="dialog" aria-expanded="false" aria-controls="navMoreSheet"
+                  aria-label="More map controls" title="More map controls">
+            <span class="nav__ctrlIcon" aria-hidden="true">⋯</span><span class="nav__ctrlText">More</span>
+          </button>
+        </div>
+
+        <div class="nav__panic">
+          <button class="panic__btn panic__btn--sm" id="navPanicBtn" type="button"
+                  aria-describedby="navPanicHelp" aria-label="Hold for two seconds to send an emergency alert">
+            <svg class="panic__ring" viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="48" class="panic__track"></circle>
+              <circle cx="50" cy="50" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6" id="navPanicRing" class="panic__progress"></circle>
+            </svg>
+            <span class="panic__face" aria-hidden="true">
+              <span class="panic__word">SOS</span>
+              <span class="panic__hint" id="navPanicLabel">Hold to alert</span>
+            </span>
+          </button>
+          <p id="navPanicHelp" class="sr-only">Press and hold for two seconds. Your area-level location is sent to your trusted circle.</p>
+          <div class="nav__panicResult" id="navPanicResult" role="status" aria-live="assertive"></div>
+        </div>
+      </div>
+
+      <!-- bottom panel -->
+      <div class="nav__bottom" id="navBottom">
+        <div class="nav__stats">
+          <div class="nav__stat"><span class="nav__statVal mono" id="navSpeed">0</span><span class="nav__statKey">km/h</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingDist">—</span><span class="nav__statKey">remaining</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingTime">—</span><span class="nav__statKey">time left</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navEta">—</span><span class="nav__statKey">arrival</span></div>
+        </div>
+        <div class="nav__row">
+          <div class="nav__compass" id="navCompass" role="img" aria-label="Compass: heading unavailable">
+            <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+              <circle cx="32" cy="32" r="29" class="nav__compassRing" />
+              <text x="32" y="12" class="nav__compassN">N</text>
+              <text x="32" y="58" class="nav__compassS">S</text>
+              <text x="55" y="36" class="nav__compassE">E</text>
+              <text x="9" y="36" class="nav__compassW">W</text>
+              <g id="navCompassNeedle">
+                <polygon points="32,10 36,32 32,36 28,32" class="nav__needleN" />
+                <polygon points="32,54 36,32 32,28 28,32" class="nav__needleS" />
+              </g>
+            </svg>
+            <span class="nav__compassText mono" id="navCompassText">—</span>
+          </div>
+          <div class="nav__safety" id="navSafety">
+            <span class="nav__safetyLabel">Road ahead</span>
+            <span class="nav__safetyVal mono" id="navSafetyVal">—</span>
+            <span class="nav__safetyNote" id="navSafetyNote"></span>
+          </div>
+        </div>
+        <div class="nav__actions">
+          <button class="btn btn--sm" id="navShareBtn" type="button">Share my live trip</button>
+          <button class="btn btn--sm" id="navSimBtn" type="button" aria-pressed="false" title="Debug: move the arrow along the route">Simulate</button>
+          <button class="btn btn--end" id="navEndBtn" type="button">End route</button>
+        </div>
+        <div class="nav__gps" id="navGps" role="status" aria-live="polite">Waiting for GPS signal…</div>
+      </div>
+
+      <!-- "more" sheet: the map controls, for screens too short for the stack -->
+      <div class="sheet" id="navMoreSheet" role="dialog" aria-modal="true" aria-labelledby="navMoreTitle" hidden>
+        <div class="sheet__panel">
+          <h2 class="sheet__title" id="navMoreTitle">Map controls</h2>
+          <div class="nav__moreList">
+            <button class="btn btn--ghost" id="navMoreNorth" type="button" aria-pressed="false">Map: heading up</button>
+            <button class="btn btn--ghost" id="navMoreRecenter" type="button">Recenter on my position</button>
+            <button class="btn btn--ghost" id="navMoreVoice" type="button" aria-pressed="true">Voice guidance: on</button>
+          </div>
+          <div class="sheet__actions">
+            <button class="btn" id="navMoreClose" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- confirmation sheet: end trip -->
+      <div class="sheet" id="navEndSheet" role="dialog" aria-modal="true" aria-labelledby="navEndTitle" hidden>
+        <div class="sheet__panel">
+          <h2 class="sheet__title" id="navEndTitle">End this trip?</h2>
+          <p class="sheet__body">Your trip summary will be saved and the planner will come back.</p>
+          <div class="sheet__actions">
+            <button class="btn btn--ghost" id="navEndCancel" type="button">Cancel</button>
+            <button class="btn btn--danger" id="navEndConfirm" type="button">End trip</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- arrival summary -->
+      <div class="sheet" id="navArriveSheet" role="dialog" aria-modal="true" aria-labelledby="navArriveTitle" hidden>
+        <div class="sheet__panel">
+          <h2 class="sheet__title" id="navArriveTitle">You've arrived</h2>
+          <dl class="nav__summary" id="navSummary"></dl>
+          <p class="disclaimer">Estimate based on reported data, not a guarantee of safety.</p>
+          <div class="sheet__actions">
+            <button class="btn" id="navArriveDone" type="button">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- permission / no-GPS explanation -->
+      <div class="sheet" id="navPermSheet" role="dialog" aria-modal="true" aria-labelledby="navPermTitle" hidden>
+        <div class="sheet__panel">
+          <h2 class="sheet__title" id="navPermTitle">Location needed for navigation</h2>
+          <p class="sheet__body" id="navPermBody">SafePath uses your location only during this trip.</p>
+          <p class="sheet__body sheet__body--dim">If you cannot grant location access, you can run a simulated trip to see how navigation works.</p>
+          <div class="sheet__actions">
+            <button class="btn btn--ghost" id="navPermCancel" type="button">Cancel</button>
+            <button class="btn" id="navPermSim" type="button">Simulate trip</button>
+            <button class="btn" id="navPermRetry" type="button">Try again</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================== WELCOME / AUTH ======================= -->
+    <!-- Shown once on first visit. Every path out of it is "continue": the
+         app is fully usable without an account. -->
+    <div class="sheet" id="welcomeSheet" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" hidden>
+      <div class="sheet__panel welcome">
+        <h2 class="sheet__title" id="welcomeTitle">Welcome to SafePath</h2>
+        <p class="welcome__lead">
+          Plan safer routes around Mysuru. No account needed — you can use every
+          navigation feature as a guest.
+        </p>
+        <div class="welcome__actions">
+          <button class="btn btn--primary btn--block" id="welcomeSignIn" type="button">Sign in</button>
+          <button class="btn btn--block" id="welcomeCreate" type="button">Create account</button>
+          <button class="btn btn--ghost btn--block welcome__skip" id="welcomeSkip" type="button">
+            Skip — continue as guest
+          </button>
+        </div>
+        <p class="welcome__note">
+          An account only adds one thing: the ability to save up to 5 emergency
+          contacts on the Emergency panel. You can sign in later from the header.
+        </p>
+      </div>
+    </div>
+
+    <!-- Sign in / create account. -->
+    <div class="sheet" id="authSheet" role="dialog" aria-modal="true" aria-labelledby="authSheetTitle" hidden>
+      <div class="sheet__panel authsheet">
+        <h2 class="sheet__title" id="authSheetTitle">Sign in</h2>
+
+        <div class="authsheet__tabs" role="tablist" aria-label="Sign in or create account">
+          <button class="authsheet__tab" id="authTabSignIn" role="tab" aria-selected="true" aria-controls="authPaneSignIn" type="button">Sign in</button>
+          <button class="authsheet__tab" id="authTabCreate" role="tab" aria-selected="false" aria-controls="authPaneCreate" type="button">Create account</button>
+        </div>
+
+        <form id="authPaneSignIn" role="tabpanel" aria-labelledby="authTabSignIn" novalidate>
+          <div class="field">
+            <label for="authEmail">Email</label>
+            <input id="authEmail" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="authPassword">Password</label>
+            <input id="authPassword" name="password" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="notice notice--err" id="authError" hidden role="alert"></div>
+          <button class="btn btn--primary btn--block" id="authSubmitBtn" type="submit">Sign in</button>
+        </form>
+
+        <form id="authPaneCreate" role="tabpanel" aria-labelledby="authTabCreate" novalidate hidden>
+          <div class="field">
+            <label for="authEmailCreate">Email</label>
+            <input id="authEmailCreate" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="authPasswordCreate">Password (6+ characters)</label>
+            <input id="authPasswordCreate" name="password" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="notice notice--err" id="authErrorCreate" hidden role="alert"></div>
+          <button class="btn btn--primary btn--block" id="authCreateBtn" type="submit">Create account</button>
+        </form>
+
+        <div class="authsheet__divider"><span>or</span></div>
+        <button class="btn btn--block" id="authGoogleBtn" type="button">Continue with Google</button>
+        <button class="btn btn--ghost btn--block authsheet__link" id="authForgotBtn" type="button">Forgot password?</button>
+
+        <div class="notice notice--ok" id="authNotice" hidden role="status"></div>
+
+        <p class="authsheet__privacy">
+          SafePath stores your email and the emergency contacts you choose to save.
+          Contacts are readable only by your account. Reports and routes never
+          require an account and are not linked to it.
+          <button class="authsheet__linkbtn" id="authPrivacyBtn" type="button">Read the privacy note</button>
+        </p>
+        <div class="sheet__actions">
+          <button class="btn btn--ghost" id="authCloseBtn" type="button">Continue as guest</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency contacts manager (signed-in users). -->
+    <div class="sheet" id="contactsSheet" role="dialog" aria-modal="true" aria-labelledby="contactsTitle" hidden>
+      <div class="sheet__panel contactsheet">
+        <h2 class="sheet__title" id="contactsTitle">Emergency contacts</h2>
+        <p class="card__sub">
+          Shown when you hold the emergency button. You can save up to
+          <span id="contactsMax">5</span> — currently <span id="contactsCount">0</span>.
+        </p>
+
+        <ul class="contactlist" id="contactList"></ul>
+        <p class="contactlist__empty" id="contactsEmpty">No contacts saved yet.</p>
+
+        <p class="card__sub contactform__consent">
+          Only add people who know you're listing them.
+        </p>
+
+        <form id="contactForm" class="contactform" novalidate>
+          <div class="field">
+            <label for="contactName">Name</label>
+            <input id="contactName" name="name" type="text" maxlength="60" autocomplete="name" required />
+          </div>
+          <div class="field">
+            <label for="contactPhone">Phone number</label>
+            <input id="contactPhone" name="phone" type="tel" maxlength="20" autocomplete="tel"
+                   placeholder="+91 98765 43210" required
+                   aria-describedby="contactPhoneHint" />
+            <span class="field__hint" id="contactPhoneHint">
+              Indian mobile, or an international number with a country code.
+            </span>
+          </div>
+          <div class="field">
+            <label for="contactRelationship">Relationship <span class="contactform__opt">(optional)</span></label>
+            <input id="contactRelationship" name="relationship" type="text" maxlength="40"
+                   placeholder="Mother, friend, neighbour…" />
+          </div>
+          <div class="notice notice--err" id="contactError" hidden role="alert"></div>
+          <p class="card__sub" id="contactStatus" role="status" aria-live="polite" hidden></p>
+          <div class="contactform__actions">
+            <button class="btn btn--primary" id="contactSaveBtn" type="submit">Add contact</button>
+            <button class="btn btn--ghost" id="contactCancelBtn" type="button" hidden>Cancel edit</button>
+          </div>
+        </form>
+
+        <div class="sheet__actions">
+          <button class="btn btn--ghost" id="contactsCloseBtn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy note + account deletion. -->
+    <div class="sheet" id="privacySheet" role="dialog" aria-modal="true" aria-labelledby="privacyTitle" hidden>
+      <div class="sheet__panel privacysheet">
+        <h2 class="sheet__title" id="privacyTitle">Privacy note</h2>
+        <ul class="privacylist">
+          <li><b>Guest use stores nothing about you.</b> Routes, reports and hotspots work without an account and are not tied to your identity.</li>
+          <li><b>An account stores only your email</b> and the emergency contacts you choose to save.</li>
+          <li><b>Contacts are private to your account.</b> Firestore security rules let only you read and write your own contact documents.</li>
+          <li><b>Reports stay area-level.</b> Report coordinates are rounded to roughly 110 m, and no location trail is stored.</li>
+          <li><b>You can delete everything.</b> Deleting your account removes your saved contacts and then the account itself.</li>
+        </ul>
+        <div class="notice notice--warn">
+          SafePath estimates risk from reported data. It is not a guarantee of
+          safety, and it is not an emergency service.
+        </div>
+        <div id="privacyDeleteWrap" hidden>
+          <div class="notice notice--warn">
+            <b>Delete all my contacts.</b> Removes every saved emergency contact
+            but keeps your account.
+          </div>
+          <button class="btn btn--ghost btn--block" id="privacyDeleteContactsBtn" type="button">
+            Delete all my contacts
+          </button>
+
+          <div class="notice notice--err" style="margin-top:12px">
+            <b>Delete my account and data.</b> This removes your saved contacts and
+            your account. It cannot be undone.
+          </div>
+          <button class="btn btn--danger btn--block" id="privacyDeleteBtn" type="button">Delete my account and data</button>
+        </div>
+        <p class="card__sub" id="privacyStatus" role="status" aria-live="polite" hidden></p>
+        <div class="sheet__actions">
+          <button class="btn btn--ghost" id="privacyCloseBtn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer" aria-labelledby="footerTitle">
+      <div class="site-footer__inner">
+        <div class="site-footer__brand">
+          <a class="site-footer__wordmark" href="#page-overview" data-tab-target="tab-overview" aria-label="SafePath overview">
+            <span class="site-footer__mark" aria-hidden="true">SP</span>
+            <span><strong>SafePath</strong><small>MYSURU</small></span>
+          </a>
+          <h2 id="footerTitle">Move freely. Feel safer.</h2>
+          <p>A calmer way to compare walking routes using reported community signals, built for everyday journeys in Mysuru.</p>
+        </div>
+        <div class="site-footer__columns">
+          <div class="site-footer__column">
+            <h3>Explore</h3>
+            <a href="#page-overview" data-tab-target="tab-overview">Overview</a>
+            <a href="#page-route" data-tab-target="tab-route">Safe Routes</a>
+            <a href="#page-live" data-tab-target="tab-live">Live Alerts</a>
+            <a href="#page-signals" data-tab-target="tab-signals">Dashboard</a>
+          </div>
+          <div class="site-footer__column">
+            <h3>Community</h3>
+            <a href="#page-report" data-tab-target="tab-report">Report an Incident</a>
+            <a href="#page-signals" data-tab-target="tab-signals">Safety Insights</a>
+            <a href="#page-overview" data-tab-target="tab-overview">How It Works</a>
+          </div>
+          <div class="site-footer__column">
+            <h3>About SafePath</h3>
+            <span>Our Mission</span>
+            <a href="#page-signals" data-tab-target="tab-signals">Data Transparency</a>
+            <span>Safety Limitations</span>
+          </div>
+          <div class="site-footer__column site-footer__column--connect">
+            <h3>Connect</h3>
+            <span>Community-first, city by city.</span>
+            <span>Public contact channels are not configured yet.</span>
+          </div>
+        </div>
+      </div>
+      <div class="site-footer__bottom">
+        <span>© 2026 SafePath · Mysuru</span>
+        <span class="site-footer__note">Route recommendations use available reported data and cannot guarantee a risk-free journey.</span>
+      </div>
+    </footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<script src="select.js"></script>
+<script src="autocomplete.js"></script>
+<script src="nav_math.js"></script>
+<script src="nav.js"></script>
+<script src="app.js"></script>
+<script src="auth-ui.js"></script>
+<script src="pwa.js"></script>
+
+<!-- Installable-app prompts. Both stay hidden unless the browser offers them. -->
+<div class="installbar" id="installPrompt" role="region" aria-label="Install SafePath" hidden>
+  <span class="installbar__icon" aria-hidden="true">SP</span>
+  <div class="installbar__text">
+    <b>Install SafePath</b>
+    <span>Add it to your home screen for one-tap access.</span>
+  </div>
+  <button class="btn btn--primary btn--sm" id="installAccept" type="button">Install</button>
+  <button class="btn btn--ghost btn--sm" id="installDismiss" type="button" aria-label="Not now">Not now</button>
+</div>
+
+<div class="installbar installbar--update" id="updatePrompt" role="status" hidden>
+  <span class="installbar__icon" aria-hidden="true">↑</span>
+  <div class="installbar__text">
+    <b>A new version is ready</b>
+    <span>Reload to get the latest safety data and fixes.</span>
+  </div>
+  <button class="btn btn--primary btn--sm" id="updateReload" type="button">Reload</button>
+</div>
+</body>
+</html>
