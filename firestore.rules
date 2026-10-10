@@ -1,0 +1,86 @@
+rules_version = '2';
+
+// ===========================================================================
+// SafePath — Firestore security rules
+// ===========================================================================
+// These rules are the ONLY thing protecting one user's data from another.
+// The client code is not trusted. Deploy with:
+//
+//   firebase deploy --only firestore:rules
+//
+// Model: every user gets one document per contact at
+//   users/{uid}/contacts/{contactId}
+//
+// A signed-in user may read and write ONLY the subtree under their own uid.
+// Nobody can read another user's contacts, and nobody can write to a uid that
+// is not their own — even if they hand-craft an API call.
+// ===========================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- helper -----------------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // The uid in the path must be the caller's own uid.
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Shape check for a contact document. Rejects unknown fields and
+    // oversized strings, so a client cannot stuff arbitrary data here.
+    // The phone check mirrors the client rule in public/auth.js: the stored
+    // value is always a single "+" followed by 8-15 digits (E.164 style), so a
+    // canonical "+91" number and an international number both pass while
+    // spaces, letters and local-only formats are refused.
+    function validPhone(p) {
+      return p is string
+        && p.size() >= 8 && p.size() <= 16
+        && p.matches('^\\+[1-9][0-9]{6,14}$');
+    }
+
+    function validContact(data) {
+      return data.keys().hasOnly(['name', 'phone', 'relationship', 'created_at'])
+        && data.name is string
+        && data.name.size() >= 2 && data.name.size() <= 60
+        && validPhone(data.phone)
+        && data.relationship is string
+        && data.relationship.size() <= 40;
+    }
+
+    // --- users/{uid} ------------------------------------------------------
+    match /users/{uid} {
+      // A user may read and write their own profile document only.
+      allow read, write: if isSelf(uid);
+
+      // --- users/{uid}/contacts/{contactId} -------------------------------
+      match /contacts/{contactId} {
+        // Read your own contacts.
+        allow read: if isSelf(uid);
+
+        // Create: your own subtree, and the document must match the expected
+        // shape. The 5-contact cap is enforced in the UI; Firestore rules
+        // cannot count sibling documents, so it is a product limit rather
+        // than a security boundary.
+        allow create: if isSelf(uid) && validContact(request.resource.data);
+
+        // Update: same shape rules, and created_at cannot be rewritten.
+        allow update: if isSelf(uid)
+          && validContact(request.resource.data)
+          && request.resource.data.created_at == resource.data.created_at;
+
+        // Delete: always allowed for your own contact.
+        allow delete: if isSelf(uid);
+      }
+    }
+
+    // --- everything else --------------------------------------------------
+    // Deny by default. Any collection not named above is unreadable and
+    // unwritable, including any future one added by mistake.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
