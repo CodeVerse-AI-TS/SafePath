@@ -1,0 +1,55 @@
+{
+  "name": "SafePath — safer walking routes in Mysuru",
+  "short_name": "SafePath",
+  "description": "Compare walking routes in Mysuru using reported safety signals. Estimates only, not a guarantee of safety.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#101114",
+  "theme_color": "#101114",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["navigation", "travel", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Plan a safe route",
+      "short_name": "Route",
+      "description": "Compare walking routes for safety",
+      "url": "/?tab=route"
+    },
+    {
+      "name": "Report a concern",
+      "short_name": "Report",
+      "description": "Add a lighting, crowd or safety report",
+      "url": "/?tab=report"
+    },
+    {
+      "name": "Live alerts",
+      "short_name": "Live",
+      "description": "Recent reports and alerts nearby",
+      "url": "/?tab=live"
+    }
+  ]
+}
