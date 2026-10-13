@@ -1,0 +1,45 @@
+# Render Blueprint — one-click deploy of SafePath.
+#
+# In Render: New + > Blueprint > pick this repo. Render reads this file and
+# creates the service below.
+#
+# Two things are deliberate and should not be changed casually:
+#
+#   1. `disk` is required. Without it Render's filesystem is wiped on every
+#      deploy and all community reports, alerts and trips are lost.
+#   2. `numInstances` stays at 1. SQLite is a single file; two containers
+#      sharing it over a network filesystem will corrupt it. To scale out,
+#      move to PostgreSQL + PostGIS first (see server/lib/db.js).
+#
+# Note: Render does not attach disks to free-tier services, so this needs a
+# paid instance type. See DEPLOY.md for free alternatives (e.g. a VPS).
+
+services:
+  - type: web
+    name: safepath
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Put the database on the persistent disk, not the ephemeral container.
+      - key: SAFEPATH_DB
+        value: /data/safepath.db
+
+      # Nominatim and OSRM require an identifying User-Agent with a real
+      # contact address. Set this during the Blueprint deploy, or requests to
+      # the public routing/geocoding services may be refused.
+      - key: SAFEPATH_UA
+        sync: false
+
+      # The default is "*", which lets any website call this API. Set this to
+      # the service URL Render gives you, e.g. https://safepath.onrender.com
+      - key: SAFEPATH_CORS
+        sync: false
+
+    disk:
+      name: safepath-data
+      mountPath: /data
+      sizeGB: 1
