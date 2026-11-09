@@ -770,6 +770,69 @@
       </div>
     </div>
 
+    <!-- ============================ OUR MISSION ===========================
+         White/grey section on a dark page, so it sits inside a rounded white
+         panel. Kept outside <main> so it is never hidden by a tab switch. -->
+    <section class="sp-mission" id="mission">
+      <p class="kicker">Our mission</p>
+      <h2>Know your route.<br><span>Alert in one press.</span></h2>
+      <p class="lead">Walking alone shouldn’t feel like a gamble. SafePath helps people see which routes have repeated safety reports, choose a safer way to get there, and send a live location alert with a single press when something feels wrong. We’re a student team building it as a free tool, because everyone deserves to move through their city with more information and less worry.</p>
+
+      <div class="beliefs">
+        <div class="belief">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <h3>Safety information should be free</h3>
+          <p>Anyone can view the map and file a report without creating an account.</p>
+        </div>
+        <div class="belief">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
+          <h3>Help should take one press</h3>
+          <p>In a moment of panic there’s no time for menus, so our panic button needs a single press and nothing else.</p>
+        </div>
+        <div class="belief">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <h3>Your privacy comes first</h3>
+          <p>We store your location only to log an alert, and we never track you.</p>
+        </div>
+      </div>
+
+      <p class="note"><strong>An honest note:</strong> SafePath is an academic prototype, not a certified emergency service. Always contact local emergency services first. Risk scores are based on community reports, and an area with no reports isn’t guaranteed to be safe.</p>
+    </section>
+
+    <!-- ========================= SAFETY LIMITATIONS ========================
+         Same light-panel treatment as the mission section above. Each entry is
+         a plain list item, so it stays readable when the panel is narrow. -->
+    <section class="sp-mission" id="limitations">
+      <p class="kicker">Safety limitations</p>
+      <h2>What SafePath can and can’t do</h2>
+      <p class="lead">We’d rather be upfront than overpromise. SafePath is a student prototype, and these are its limits.</p>
+
+      <ul class="sp-list">
+        <li><b>Not an emergency service.</b> It doesn’t replace the police, an ambulance or any official helpline. In danger, contact local emergency services first.</li>
+        <li><b>Risk scores come from reports.</b> An area with few reports isn’t guaranteed safe, and a busy hotspot may simply be a place where more people report.</li>
+        <li><b>The map may use sample data.</b> In this demo, some hotspots are simulated to show how the system works.</li>
+        <li><b>The panic button depends on its connection.</b> It needs WiFi and a GPS fix, and GPS can fail indoors, so an alert may be delayed or may not send.</li>
+        <li><b>Routes are suggestions.</b> The safer route is a comparison, not a guarantee, so trust your own judgement on the ground.</li>
+        <li><b>No misuse protection yet.</b> We haven’t built checks for false alerts or fake reports.</li>
+      </ul>
+    </section>
+
+    <!-- ========================= COMMUNITY-FIRST ========================== -->
+    <section class="sp-mission" id="community">
+      <p class="kicker">Community-first</p>
+      <h2>Built with the community, for the community</h2>
+      <p class="lead">SafePath is only as useful as the people who use it. Every report adds to the map, and every report helps the next person choose a better route. Viewing the map and sharing a report never requires an account.</p>
+
+      <h3 class="sp-subhead">How we ask you to report:</h3>
+      <ul class="sp-list">
+        <li>Report places and conditions (a dark stretch, a broken streetlight), not named individuals.</li>
+        <li>Be honest and specific, because false reports make the map less trustworthy.</li>
+        <li>Never share someone else’s personal details.</li>
+      </ul>
+
+      <p class="note"><strong>Your say:</strong> Found a problem or have an idea? Tell us, because this project is shaped by feedback.</p>
+    </section>
+
     <footer class="site-footer" aria-labelledby="footerTitle">
       <div class="site-footer__inner">
         <div class="site-footer__brand">
@@ -796,13 +859,13 @@
           </div>
           <div class="site-footer__column">
             <h3>About SafePath</h3>
-            <span>Our Mission</span>
+            <a href="#mission">Our Mission</a>
             <a href="#page-signals" data-tab-target="tab-signals">Data Transparency</a>
-            <span>Safety Limitations</span>
+            <a href="#limitations">Safety Limitations</a>
           </div>
           <div class="site-footer__column site-footer__column--connect">
             <h3>Connect</h3>
-            <span>Community-first, city by city.</span>
+            <a href="#community">Community-first, city by city.</a>
             <span>Public contact channels are not configured yet.</span>
           </div>
         </div>
