@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -12,16 +12,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="SafePath" />
-<title>SafePath — free safer walking routes in Mysuru</title>
-<meta name="description" content="SafePath is a free public tool that compares walking routes in Mysuru using reported safety signals. Estimates only — not a guarantee of safety." />
+<title>SafePath â€” free safer walking routes in Mysuru</title>
+<meta name="description" content="SafePath is a free public tool that compares walking routes in Mysuru using reported safety signals. Estimates only â€” not a guarantee of safety." />
 <meta name="keywords" content="Mysuru walking routes, safer walking route, community safety, public safety map, SafePath" />
 <meta name="robots" content="index, follow" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="SafePath" />
-<meta property="og:title" content="SafePath — free safer walking routes in Mysuru" />
+<meta property="og:title" content="SafePath â€” free safer walking routes in Mysuru" />
 <meta property="og:description" content="Compare walking routes in Mysuru using reported safety signals. Free for everyone; estimates only." />
 <meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="SafePath — free safer walking routes in Mysuru" />
+<meta name="twitter:title" content="SafePath â€” free safer walking routes in Mysuru" />
 <meta name="twitter:description" content="A free public route planner for comparing reported safety signals in Mysuru." />
 <script type="application/ld+json">
 {
@@ -40,6 +40,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script>!function(){var t=localStorage.getItem("safepath-theme")||"system",e="dark"===t||"system"===t&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",e)}();</script>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -58,6 +59,9 @@
     <span class="chip chip--sample" id="dataChip" title="Which data the app is running on">sample data</span>
     <span class="chip" title="SafePath is free for everyone">free public tool</span>
     <span class="chip" id="modelChip" title="Model build time">model —</span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch theme" title="Toggle theme">
+      <!-- icon injected by JS -->
+    </button>
 
     <!-- Optional accounts. A guest sees a Sign in button; a signed-in user
          sees their name and Sign out. Navigation never depends on this. -->
@@ -91,14 +95,14 @@
     <section class="page" id="page-overview" role="tabpanel" aria-labelledby="tab-overview">
       <section class="hero" aria-labelledby="heroTitle">
         <div class="hero__copy">
-          <p class="hero__eyebrow"><span class="hero__eyebrowDot"></span>Free public safety tool · Mysuru</p>
+          <p class="hero__eyebrow"><span class="hero__eyebrowDot"></span>Free public safety tool Â· Mysuru</p>
           <h1 class="hero__title" id="heroTitle"><span>Move Freely.</span><span>Feel Safer.</span></h1>
           <p class="hero__lead">Intelligent routes. Real-time safety alerts. A smarter way to navigate your surroundings.</p>
           <div class="hero__actions">
-            <button class="btn btn--primary" id="heroPlanBtn" type="button">Find a Safe Route <span aria-hidden="true">↗</span></button>
-            <button class="btn btn--ghost hero__secondary" id="heroExploreBtn" type="button">Explore SafePath <span aria-hidden="true">↓</span></button>
+            <button class="btn btn--primary" id="heroPlanBtn" type="button">Find a Safe Route <span aria-hidden="true">â†—</span></button>
+            <button class="btn btn--ghost hero__secondary" id="heroExploreBtn" type="button">Explore SafePath <span aria-hidden="true">â†“</span></button>
           </div>
-          <p class="hero__trust"><span aria-hidden="true">✦</span> Uses reported community signals to compare routes. Estimates only — never a guarantee of safety.</p>
+          <p class="hero__trust"><span aria-hidden="true">âœ¦</span> Uses reported community signals to compare routes. Estimates only â€” never a guarantee of safety.</p>
         </div>
         <div class="hero__visual" aria-label="Illustration of a safer route through Mysuru">
           <div class="hero__ambient"></div>
@@ -110,9 +114,9 @@
             <span class="hero__marker hero__marker--start">A</span>
             <span class="hero__marker hero__marker--end">B</span>
           </div>
-          <div class="hero-card hero-card--route"><span class="hero-card__icon">↗</span><span><b>Safest route</b><small>Low reported risk · 24 min</small></span><strong>01</strong></div>
-          <div class="hero-card hero-card--alert"><span class="hero-card__pulse"></span><span><b>Nearby alert</b><small>Community signal · 110 m</small></span></div>
-          <div class="hero-card hero-card--hotspot"><span class="hero-card__icon">◌</span><span><b>Area signal</b><small>Reported data only</small></span></div>
+          <div class="hero-card hero-card--route"><span class="hero-card__icon">â†—</span><span><b>Safest route</b><small>Low reported risk Â· 24 min</small></span><strong>01</strong></div>
+          <div class="hero-card hero-card--alert"><span class="hero-card__pulse"></span><span><b>Nearby alert</b><small>Community signal Â· 110 m</small></span></div>
+          <div class="hero-card hero-card--hotspot"><span class="hero-card__icon">â—Œ</span><span><b>Area signal</b><small>Reported data only</small></span></div>
         </div>
       </section>
       <div class="hero__scroll" aria-hidden="true"><span></span>Scroll to plan your route</div>
@@ -125,7 +129,7 @@
               <label for="fromInput">From</label>
               <div class="row">
                 <input id="fromInput" type="text" placeholder="e.g. Mysore Palace, or 12.31,76.66" autocomplete="off" />
-                <button class="btn btn--sm" id="useLocationBtn" type="button" title="Use my current location" aria-label="Use my current location">◎</button>
+                <button class="btn btn--sm" id="useLocationBtn" type="button" title="Use my current location" aria-label="Use my current location">â—Ž</button>
               </div>
             </div>
             <div class="field">
@@ -136,7 +140,7 @@
               <label for="departInput">Departure time</label>
               <select id="departInput" data-glass-select>
                 <option value="now" selected>Leave now</option>
-                <option value="custom">Custom time…</option>
+                <option value="custom">Custom timeâ€¦</option>
               </select>
             </div>
             <div class="field" id="customTimeField" hidden>
@@ -172,7 +176,7 @@
           </div>
           <div class="map-search">
             <label class="sr-only" for="mapSearchInput">Search for a place on the map</label>
-            <input id="mapSearchInput" type="text" placeholder="Search a place…" autocomplete="off" />
+            <input id="mapSearchInput" type="text" placeholder="Search a placeâ€¦" autocomplete="off" />
           </div>
           <div class="map-overlay map-overlay--tl">
             <button class="btn btn--sm" id="heatToggle" type="button" aria-pressed="false">Risk heatmap</button>
@@ -207,7 +211,7 @@
           <div class="card">
             <div class="card__head"><h2 class="card__title">Options</h2><span class="card__sub" id="candidateCount"></span></div>
             <div class="routes" id="routeCards">
-              <p class="feed__empty">No routes yet. Enter a start and destination, then choose “Find safe routes”.</p>
+              <p class="feed__empty">No routes yet. Enter a start and destination, then choose â€œFind safe routesâ€.</p>
             </div>
           </div>
           <div class="card" id="whyCard" hidden>
@@ -265,11 +269,11 @@
           </div>
           <div class="row">
             <div class="field">
-              <label for="reportLighting">Lighting (1 dark – 5 bright)</label>
+              <label for="reportLighting">Lighting (1 dark â€“ 5 bright)</label>
               <input id="reportLighting" type="range" min="1" max="5" step="1" value="3" class="slider" />
             </div>
             <div class="field">
-              <label for="reportCrowd">Crowd (1 empty – 5 busy)</label>
+              <label for="reportCrowd">Crowd (1 empty â€“ 5 busy)</label>
               <input id="reportCrowd" type="range" min="1" max="5" step="1" value="3" class="slider" />
             </div>
           </div>
@@ -310,9 +314,9 @@
         <div class="card">
           <div class="card__head">
             <h2 class="card__title">Incoming reports</h2>
-            <span class="status-pill" id="liveStatus" role="status" aria-live="polite"><span class="spinner"></span>connecting…</span>
+            <span class="status-pill" id="liveStatus" role="status" aria-live="polite"><span class="spinner"></span>connectingâ€¦</span>
           </div>
-          <ul class="feed" id="liveFeed" aria-live="polite"><li class="feed__empty">Waiting for reports…</li></ul>
+          <ul class="feed" id="liveFeed" aria-live="polite"><li class="feed__empty">Waiting for reportsâ€¦</li></ul>
         </div>
         <div class="card">
           <div class="card__head"><h2 class="card__title">Alerts</h2><span class="card__sub" id="alertMode"></span></div>
@@ -345,7 +349,7 @@
                only action on this panel that reaches a real human directly. -->
           <div class="emergencycall">
             <a class="btn btn--danger btn--block" id="call112Btn" href="tel:112">
-              Call 112 — emergency services
+              Call 112 â€” emergency services
             </a>
             <p class="card__sub">
               Opens your phone dialler. A web page cannot place the call for you.
@@ -356,7 +360,7 @@
 
           <!-- Guests are never blocked: they get the sign-in prompt AND 112. -->
           <div class="notice notice--warn" id="emergencyGuest">
-            <b>Sign in to save emergency contacts</b> — then you can text or
+            <b>Sign in to save emergency contacts</b> â€” then you can text or
             WhatsApp them in one tap. You can still call 112 right now.
             <button class="btn btn--sm" id="emergencySignInBtn" type="button">Sign in</button>
           </div>
@@ -383,7 +387,7 @@
 
           <p class="card__sub" id="emergencyHonesty">
             SafePath cannot send an SMS or WhatsApp message on your behalf. The
-            buttons above open your own messaging app with the text ready — you
+            buttons above open your own messaging app with the text ready â€” you
             press send.
           </p>
         </div>
@@ -422,7 +426,7 @@
         </div>
         <div class="card">
           <div class="card__head"><h2 class="card__title">Top hotspots</h2><span class="card__sub" id="hotspotCount"></span></div>
-          <ul class="hotspot-list" id="hotspotList"><li class="feed__empty">Loading…</li></ul>
+          <ul class="hotspot-list" id="hotspotList"><li class="feed__empty">Loadingâ€¦</li></ul>
           <p class="card__sub" style="margin-top:10px">Hotspots are clusters of reported incidents. They describe reported data, not the people who live in an area.</p>
         </div>
       </div>
@@ -441,9 +445,9 @@
 
       <!-- next instruction banner -->
       <div class="nav__banner" id="navBanner" role="status" aria-live="assertive" aria-atomic="true">
-        <span class="nav__icon" id="navIcon" aria-hidden="true">↑</span>
+        <span class="nav__icon" id="navIcon" aria-hidden="true">â†‘</span>
         <div class="nav__bannerText">
-          <div class="nav__instruction" id="navInstruction">Waiting for GPS…</div>
+          <div class="nav__instruction" id="navInstruction">Waiting for GPSâ€¦</div>
           <div class="nav__street" id="navStreet"></div>
         </div>
         <div class="nav__bannerDist mono" id="navStepDist"></div>
@@ -453,7 +457,7 @@
       <div class="nav__alert" id="navAlert" role="alert" hidden>
         <span class="nav__alertIcon" aria-hidden="true">!</span>
         <span id="navAlertText"></span>
-        <button class="nav__alertDismiss" id="navAlertDismiss" type="button" aria-label="Dismiss this warning">×</button>
+        <button class="nav__alertDismiss" id="navAlertDismiss" type="button" aria-label="Dismiss this warning">Ã—</button>
       </div>
 
       <!-- reroute prompt -->
@@ -480,21 +484,21 @@
         <div class="nav__mapBtns">
           <button class="nav__ctrl" id="navNorthBtn" type="button" aria-pressed="false"
                   aria-label="Map is heading up. Switch to north up." title="Map is heading up. Switch to north up.">
-            <span class="nav__ctrlIcon" aria-hidden="true">↑</span><span class="nav__ctrlText">heading-up</span>
+            <span class="nav__ctrlIcon" aria-hidden="true">â†‘</span><span class="nav__ctrlText">heading-up</span>
           </button>
           <button class="nav__ctrl" id="navRecenterBtn" type="button"
                   aria-label="Recenter the map on your position" title="Recenter on your position">
-            <span class="nav__ctrlIcon" aria-hidden="true">◎</span><span class="nav__ctrlText">Recenter</span>
+            <span class="nav__ctrlIcon" aria-hidden="true">â—Ž</span><span class="nav__ctrlText">Recenter</span>
           </button>
           <button class="nav__ctrl" id="navVoiceBtn" type="button" aria-pressed="true"
                   aria-label="Voice guidance on" title="Voice guidance on">
-            <span class="nav__ctrlIcon" id="navVoiceIcon" aria-hidden="true">🔊</span><span class="nav__ctrlText">Voice</span>
+            <span class="nav__ctrlIcon" id="navVoiceIcon" aria-hidden="true">ðŸ”Š</span><span class="nav__ctrlText">Voice</span>
           </button>
           <!-- Shown only on screens too short to fit the three controls above. -->
           <button class="nav__ctrl nav__ctrl--more" id="navMoreBtn" type="button" hidden
                   aria-haspopup="dialog" aria-expanded="false" aria-controls="navMoreSheet"
                   aria-label="More map controls" title="More map controls">
-            <span class="nav__ctrlIcon" aria-hidden="true">⋯</span><span class="nav__ctrlText">More</span>
+            <span class="nav__ctrlIcon" aria-hidden="true">â‹¯</span><span class="nav__ctrlText">More</span>
           </button>
         </div>
 
@@ -519,9 +523,9 @@
       <div class="nav__bottom" id="navBottom">
         <div class="nav__stats">
           <div class="nav__stat"><span class="nav__statVal mono" id="navSpeed">0</span><span class="nav__statKey">km/h</span></div>
-          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingDist">—</span><span class="nav__statKey">remaining</span></div>
-          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingTime">—</span><span class="nav__statKey">time left</span></div>
-          <div class="nav__stat"><span class="nav__statVal mono" id="navEta">—</span><span class="nav__statKey">arrival</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingDist">â€”</span><span class="nav__statKey">remaining</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navRemainingTime">â€”</span><span class="nav__statKey">time left</span></div>
+          <div class="nav__stat"><span class="nav__statVal mono" id="navEta">â€”</span><span class="nav__statKey">arrival</span></div>
         </div>
         <div class="nav__row">
           <div class="nav__compass" id="navCompass" role="img" aria-label="Compass: heading unavailable">
@@ -536,11 +540,11 @@
                 <polygon points="32,54 36,32 32,28 28,32" class="nav__needleS" />
               </g>
             </svg>
-            <span class="nav__compassText mono" id="navCompassText">—</span>
+            <span class="nav__compassText mono" id="navCompassText">â€”</span>
           </div>
           <div class="nav__safety" id="navSafety">
             <span class="nav__safetyLabel">Road ahead</span>
-            <span class="nav__safetyVal mono" id="navSafetyVal">—</span>
+            <span class="nav__safetyVal mono" id="navSafetyVal">â€”</span>
             <span class="nav__safetyNote" id="navSafetyNote"></span>
           </div>
         </div>
@@ -549,7 +553,7 @@
           <button class="btn btn--sm" id="navSimBtn" type="button" aria-pressed="false" title="Debug: move the arrow along the route">Simulate</button>
           <button class="btn btn--end" id="navEndBtn" type="button">End route</button>
         </div>
-        <div class="nav__gps" id="navGps" role="status" aria-live="polite">Waiting for GPS signal…</div>
+        <div class="nav__gps" id="navGps" role="status" aria-live="polite">Waiting for GPS signalâ€¦</div>
       </div>
 
       <!-- "more" sheet: the map controls, for screens too short for the stack -->
@@ -613,14 +617,14 @@
       <div class="sheet__panel welcome">
         <h2 class="sheet__title" id="welcomeTitle">Welcome to SafePath</h2>
         <p class="welcome__lead">
-          Plan safer routes around Mysuru. No account needed — you can use every
+          Plan safer routes around Mysuru. No account needed â€” you can use every
           navigation feature as a guest.
         </p>
         <div class="welcome__actions">
           <button class="btn btn--primary btn--block" id="welcomeSignIn" type="button">Sign in</button>
           <button class="btn btn--block" id="welcomeCreate" type="button">Create account</button>
           <button class="btn btn--ghost btn--block welcome__skip" id="welcomeSkip" type="button">
-            Skip — continue as guest
+            Skip â€” continue as guest
           </button>
         </div>
         <p class="welcome__note">
@@ -690,7 +694,7 @@
         <h2 class="sheet__title" id="contactsTitle">Emergency contacts</h2>
         <p class="card__sub">
           Shown when you hold the emergency button. You can save up to
-          <span id="contactsMax">5</span> — currently <span id="contactsCount">0</span>.
+          <span id="contactsMax">5</span> â€” currently <span id="contactsCount">0</span>.
         </p>
 
         <ul class="contactlist" id="contactList"></ul>
@@ -717,7 +721,7 @@
           <div class="field">
             <label for="contactRelationship">Relationship <span class="contactform__opt">(optional)</span></label>
             <input id="contactRelationship" name="relationship" type="text" maxlength="40"
-                   placeholder="Mother, friend, neighbour…" />
+                   placeholder="Mother, friend, neighbourâ€¦" />
           </div>
           <div class="notice notice--err" id="contactError" hidden role="alert"></div>
           <p class="card__sub" id="contactStatus" role="status" aria-live="polite" hidden></p>
@@ -780,7 +784,7 @@
     <section class="sp-mission" id="mission">
       <p class="kicker">Our mission</p>
       <h2>Know your route.<br><span>Alert in one press.</span></h2>
-      <p class="lead">Walking alone shouldn’t feel like a gamble. SafePath helps people see which routes have repeated safety reports, choose a safer way to get there, and send a live location alert with a single press when something feels wrong. We’re a student team building it as a free tool, because everyone deserves to move through their city with more information and less worry.</p>
+      <p class="lead">Walking alone shouldnâ€™t feel like a gamble. SafePath helps people see which routes have repeated safety reports, choose a safer way to get there, and send a live location alert with a single press when something feels wrong. Weâ€™re a student team building it as a free tool, because everyone deserves to move through their city with more information and less worry.</p>
 
       <div class="beliefs">
         <div class="belief">
@@ -791,7 +795,7 @@
         <div class="belief">
           <span class="belief__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span>
           <h3>Help should take one press</h3>
-          <p>In a moment of panic there’s no time for menus, so our panic button needs a single press and nothing else.</p>
+          <p>In a moment of panic thereâ€™s no time for menus, so our panic button needs a single press and nothing else.</p>
         </div>
         <div class="belief">
           <span class="belief__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
@@ -800,7 +804,7 @@
         </div>
       </div>
 
-      <p class="note"><strong>An honest note:</strong> SafePath is an academic prototype, not a certified emergency service. Always contact local emergency services first. Risk scores are based on community reports, and an area with no reports isn’t guaranteed to be safe.</p>
+      <p class="note"><strong>An honest note:</strong> SafePath is an academic prototype, not a certified emergency service. Always contact local emergency services first. Risk scores are based on community reports, and an area with no reports isnâ€™t guaranteed to be safe.</p>
     </section>
 
     <!-- ========================= SAFETY LIMITATIONS ========================
@@ -808,17 +812,17 @@
          block's heading so the meaning is unchanged. -->
     <section class="sp-mission" id="limitations">
       <p class="kicker">Safety limitations</p>
-      <h2>What SafePath can and can’t do</h2>
-      <p class="lead">We’d rather be upfront than overpromise. SafePath is a student prototype, and these are its limits.</p>
+      <h2>What SafePath can and canâ€™t do</h2>
+      <p class="lead">Weâ€™d rather be upfront than overpromise. SafePath is a student prototype, and these are its limits.</p>
 
       <ul class="sp-grid sp-grid--limits">
         <li class="sp-block">
           <h3>Not an emergency service.</h3>
-          <p>It doesn’t replace the police, an ambulance or any official helpline. In danger, contact local emergency services first.</p>
+          <p>It doesnâ€™t replace the police, an ambulance or any official helpline. In danger, contact local emergency services first.</p>
         </li>
         <li class="sp-block">
           <h3>Risk scores come from reports.</h3>
-          <p>An area with few reports isn’t guaranteed safe, and a busy hotspot may simply be a place where more people report.</p>
+          <p>An area with few reports isnâ€™t guaranteed safe, and a busy hotspot may simply be a place where more people report.</p>
         </li>
         <li class="sp-block">
           <h3>The map may use sample data.</h3>
@@ -834,7 +838,7 @@
         </li>
         <li class="sp-block">
           <h3>No misuse protection yet.</h3>
-          <p>We haven’t built checks for false alerts or fake reports.</p>
+          <p>We havenâ€™t built checks for false alerts or fake reports.</p>
         </li>
       </ul>
     </section>
@@ -850,7 +854,7 @@
         <li class="sp-block">
           <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
           <h4>Report places and conditions</h4>
-          <p>A dark stretch, a broken streetlight — not named individuals.</p>
+          <p>A dark stretch, a broken streetlight â€” not named individuals.</p>
         </li>
         <li class="sp-block">
           <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
@@ -859,8 +863,8 @@
         </li>
         <li class="sp-block">
           <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-          <h4>Respect other people’s privacy</h4>
-          <p>Never share someone else’s personal details.</p>
+          <h4>Respect other peopleâ€™s privacy</h4>
+          <p>Never share someone elseâ€™s personal details.</p>
         </li>
       </ul>
 
@@ -907,7 +911,7 @@
         </div>
       </div>
       <div class="site-footer__bottom">
-        <span>© 2026 SafePath · Mysuru</span>
+        <span>Â© 2026 SafePath Â· Mysuru</span>
         <span class="site-footer__note">Route recommendations use available reported data and cannot guarantee a risk-free journey.</span>
       </div>
     </footer>
@@ -935,7 +939,7 @@
 </div>
 
 <div class="installbar installbar--update" id="updatePrompt" role="status" hidden>
-  <span class="installbar__icon" aria-hidden="true">↑</span>
+  <span class="installbar__icon" aria-hidden="true">â†‘</span>
   <div class="installbar__text">
     <b>A new version is ready</b>
     <span>Reload to get the latest safety data and fixes.</span>
@@ -944,3 +948,5 @@
 </div>
 </body>
 </html>
+
+

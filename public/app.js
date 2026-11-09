@@ -1367,3 +1367,93 @@ window.SafePathApp = {
 };
 
 document.addEventListener('DOMContentLoaded', boot);
+
+/* ============================================================================
+   THEME SWITCHER — Light / Dark / System
+   Cycles: light -> dark -> system -> light
+   Persisted in localStorage key "safepath-theme"
+   Icons match the reference image exactly (SVG paths)
+   ============================================================================ */
+(function () {
+  const STORAGE_KEY = 'safepath-theme';
+  const MODES = ['light', 'dark', 'system'];
+
+  const ICONS = {
+    light: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>
+      <line x1="12" y1="2"  x2="12" y2="4"/>
+      <line x1="12" y1="20" x2="12" y2="22"/>
+      <line x1="4.22" y1="4.22"  x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="2"  y1="12" x2="4"  y2="12"/>
+      <line x1="20" y1="12" x2="22" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"/>
+    </svg>`,
+    dark: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>`,
+    system: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+      <path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/>
+    </svg>`
+  };
+
+  const LABELS = {
+    light:  'Switch to dark theme',
+    dark:   'Switch to system theme',
+    system: 'Switch to light theme'
+  };
+
+  function getEffectiveTheme(mode) {
+    if (mode === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return mode;
+  }
+
+  function applyTheme(mode) {
+    const effective = getEffectiveTheme(mode);
+    document.documentElement.setAttribute('data-theme', effective);
+    // Update meta theme-color
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = effective === 'dark' ? '#0f172a' : '#f2f0eb';
+  }
+
+  function updateButton(btn, mode) {
+    btn.innerHTML = ICONS[mode];
+    btn.setAttribute('aria-label', LABELS[mode]);
+    btn.setAttribute('title', 'Theme: ' + mode.charAt(0).toUpperCase() + mode.slice(1));
+  }
+
+  function init() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+
+    let current = localStorage.getItem(STORAGE_KEY) || 'system';
+    if (!MODES.includes(current)) current = 'system';
+
+    applyTheme(current);
+    updateButton(btn, current);
+
+    btn.addEventListener('click', function () {
+      const idx = MODES.indexOf(current);
+      current = MODES[(idx + 1) % MODES.length];
+      localStorage.setItem(STORAGE_KEY, current);
+      applyTheme(current);
+      updateButton(btn, current);
+    });
+
+    // Auto-update when OS theme changes (for system mode)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      if (current === 'system') applyTheme('system');
+    });
+  }
+
+  // Run immediately if DOM ready, else wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
