@@ -770,9 +770,13 @@
       </div>
     </div>
 
-    <!-- ============================ OUR MISSION ===========================
-         White/grey section on a dark page, so it sits inside a rounded white
-         panel. Kept outside <main> so it is never hidden by a tab switch. -->
+    <!-- ===================== CLOSING SECTIONS =============================
+         Our mission, Safety limitations and Community-first form one closing
+         block. The wrapper aligns them with the page width, and the shared
+         card surface keeps them continuous with the rest of the site.
+         Kept outside <main> so a tab switch can never hide them. -->
+    <div class="sp-closing">
+
     <section class="sp-mission" id="mission">
       <p class="kicker">Our mission</p>
       <h2>Know your route.<br><span>Alert in one press.</span></h2>
@@ -780,17 +784,17 @@
 
       <div class="beliefs">
         <div class="belief">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <span class="belief__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
           <h3>Safety information should be free</h3>
           <p>Anyone can view the map and file a report without creating an account.</p>
         </div>
         <div class="belief">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
+          <span class="belief__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span>
           <h3>Help should take one press</h3>
           <p>In a moment of panic there’s no time for menus, so our panic button needs a single press and nothing else.</p>
         </div>
         <div class="belief">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <span class="belief__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
           <h3>Your privacy comes first</h3>
           <p>We store your location only to log an alert, and we never track you.</p>
         </div>
@@ -800,20 +804,38 @@
     </section>
 
     <!-- ========================= SAFETY LIMITATIONS ========================
-         Same light-panel treatment as the mission section above. Each entry is
-         a plain list item, so it stays readable when the panel is narrow. -->
+         Each limitation keeps its original wording; the lead-in phrase is the
+         block's heading so the meaning is unchanged. -->
     <section class="sp-mission" id="limitations">
       <p class="kicker">Safety limitations</p>
       <h2>What SafePath can and can’t do</h2>
       <p class="lead">We’d rather be upfront than overpromise. SafePath is a student prototype, and these are its limits.</p>
 
-      <ul class="sp-list">
-        <li><b>Not an emergency service.</b> It doesn’t replace the police, an ambulance or any official helpline. In danger, contact local emergency services first.</li>
-        <li><b>Risk scores come from reports.</b> An area with few reports isn’t guaranteed safe, and a busy hotspot may simply be a place where more people report.</li>
-        <li><b>The map may use sample data.</b> In this demo, some hotspots are simulated to show how the system works.</li>
-        <li><b>The panic button depends on its connection.</b> It needs WiFi and a GPS fix, and GPS can fail indoors, so an alert may be delayed or may not send.</li>
-        <li><b>Routes are suggestions.</b> The safer route is a comparison, not a guarantee, so trust your own judgement on the ground.</li>
-        <li><b>No misuse protection yet.</b> We haven’t built checks for false alerts or fake reports.</li>
+      <ul class="sp-grid sp-grid--limits">
+        <li class="sp-block">
+          <h3>Not an emergency service.</h3>
+          <p>It doesn’t replace the police, an ambulance or any official helpline. In danger, contact local emergency services first.</p>
+        </li>
+        <li class="sp-block">
+          <h3>Risk scores come from reports.</h3>
+          <p>An area with few reports isn’t guaranteed safe, and a busy hotspot may simply be a place where more people report.</p>
+        </li>
+        <li class="sp-block">
+          <h3>The map may use sample data.</h3>
+          <p>In this demo, some hotspots are simulated to show how the system works.</p>
+        </li>
+        <li class="sp-block">
+          <h3>The panic button depends on its connection.</h3>
+          <p>It needs WiFi and a GPS fix, and GPS can fail indoors, so an alert may be delayed or may not send.</p>
+        </li>
+        <li class="sp-block">
+          <h3>Routes are suggestions.</h3>
+          <p>The safer route is a comparison, not a guarantee, so trust your own judgement on the ground.</p>
+        </li>
+        <li class="sp-block">
+          <h3>No misuse protection yet.</h3>
+          <p>We haven’t built checks for false alerts or fake reports.</p>
+        </li>
       </ul>
     </section>
 
@@ -824,14 +846,28 @@
       <p class="lead">SafePath is only as useful as the people who use it. Every report adds to the map, and every report helps the next person choose a better route. Viewing the map and sharing a report never requires an account.</p>
 
       <h3 class="sp-subhead">How we ask you to report:</h3>
-      <ul class="sp-list">
-        <li>Report places and conditions (a dark stretch, a broken streetlight), not named individuals.</li>
-        <li>Be honest and specific, because false reports make the map less trustworthy.</li>
-        <li>Never share someone else’s personal details.</li>
+      <ul class="sp-grid sp-grid--report">
+        <li class="sp-block">
+          <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+          <h4>Report places and conditions</h4>
+          <p>A dark stretch, a broken streetlight — not named individuals.</p>
+        </li>
+        <li class="sp-block">
+          <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <h4>Be honest and specific</h4>
+          <p>False reports make the map less trustworthy.</p>
+        </li>
+        <li class="sp-block">
+          <span class="sp-block__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+          <h4>Respect other people’s privacy</h4>
+          <p>Never share someone else’s personal details.</p>
+        </li>
       </ul>
 
       <p class="note"><strong>Your say:</strong> Found a problem or have an idea? Tell us, because this project is shaped by feedback.</p>
     </section>
+
+    </div>
 
     <footer class="site-footer" aria-labelledby="footerTitle">
       <div class="site-footer__inner">

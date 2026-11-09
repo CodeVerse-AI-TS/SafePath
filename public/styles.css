@@ -955,87 +955,151 @@ body.nav-active .app { display: none; }
 }
 
 /* ==========================================================================
-   Our mission — white/grey section on a dark page
+   Closing sections — Our mission, Safety limitations, Community-first
    --------------------------------------------------------------------------
-   Every selector is scoped under .sp-mission so nothing here can reach the
-   rest of the site. The section keeps its own light palette; on this dark
-   page it sits inside a rounded white panel with a margin, so it reads as a
-   deliberate inset card rather than a bright band.
+   One closing block, aligned with the page container (.app) so it spreads to
+   the full content width. The surfaces reuse the site's own charcoal/silver
+   language — the same panel gradient, border, radius and display type as
+   .card — so the sections read as part of SafePath rather than as embedded
+   templates. Every selector is scoped under .sp-closing or .sp-mission, so
+   nothing here can reach the rest of the site.
    ========================================================================== */
+.sp-closing {
+  max-width: 1480px;
+  margin: 8px auto 0;
+  padding: 0 28px 8px;
+  display: grid;
+  gap: 24px;
+}
+
+/* ---- shared section shell ---- */
 .sp-mission {
-  --sp-bg: #f3f4f6; --sp-card: #ffffff; --sp-line: #d1d5db;
-  --sp-ink: #1f2937; --sp-mute: #6b7280;
-  max-width: 900px;
-  /* Never wider than the viewport minus a 16px inset each side, so the white
-     panel keeps a margin on a phone instead of running edge to edge. */
-  width: min(900px, calc(100% - 32px));
-  margin: 56px auto 0;
-  padding: 40px 36px;
-  color: var(--sp-ink);
-  background: var(--sp-card);
-  border-radius: 22px;
-  line-height: 1.6;
+  position: relative;
+  padding: 52px 48px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(32,34,40,.82), rgba(19,20,24,.78));
+  box-shadow: 0 24px 70px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+  color: var(--text);
 }
 .sp-mission * { box-sizing: border-box; }
 
 .sp-mission .kicker {
-  color: var(--sp-mute); font-size: 12px; font-weight: 700;
-  letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;
+  margin: 0 0 12px; color: var(--muted);
+  font: 600 11px var(--mono); letter-spacing: .16em; text-transform: uppercase;
 }
 .sp-mission h2 {
-  font-size: clamp(28px, 5vw, 42px); line-height: 1.15;
-  margin: 0 0 18px; color: #111827;
+  margin: 0 0 16px; color: var(--text);
+  font: 600 clamp(28px, 3.4vw, 42px)/1.1 var(--display); letter-spacing: -.04em;
 }
-.sp-mission h2 span { color: var(--sp-mute); }
-.sp-mission .lead { color: #4b5563; font-size: 17px; margin: 0; max-width: 720px; }
+.sp-mission h2 span { color: var(--muted); }
+.sp-mission .lead {
+  margin: 0; max-width: 78ch; color: var(--muted);
+  font-size: 16px; line-height: 1.7;
+}
 
+/* ---- Our mission: the three beliefs as feature columns ---- */
 .sp-mission .beliefs {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 16px; margin: 40px 0 24px;
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 18px; margin: 38px 0 30px;
 }
 .sp-mission .belief {
-  background: var(--sp-bg); border: 1px solid var(--sp-line);
-  border-radius: 14px; padding: 22px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 26px 24px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.035);
+  transition: border-color .24s ease, background .24s ease, transform .24s ease;
 }
-.sp-mission .belief svg {
-  width: 28px; height: 28px; stroke: #374151; fill: none;
-  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 10px;
+.sp-mission .belief:hover {
+  border-color: var(--line-strong); background: rgba(255,255,255,.06);
+  transform: translateY(-2px);
 }
-.sp-mission .belief h3 { margin: 0 0 6px; font-size: 16px; color: #111827; }
-.sp-mission .belief p { margin: 0; color: var(--sp-mute); font-size: 14px; }
+.sp-mission .belief h3 {
+  margin: 0; color: var(--text);
+  font: 600 16px/1.35 var(--display); letter-spacing: -.02em;
+}
+.sp-mission .belief p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
 
-.sp-mission .note {
-  border-left: 3px solid #9ca3af; background: var(--sp-bg);
-  border-radius: 0 10px 10px 0; padding: 14px 18px;
-  color: var(--sp-mute); font-size: 13px; margin: 0;
+/* ---- structured content grids (limits + reporting guidelines) ---- */
+.sp-mission .sp-grid {
+  list-style: none; margin: 34px 0 0; padding: 0;
+  display: grid; gap: 16px;
 }
-.sp-mission .note strong { color: var(--sp-ink); }
+.sp-mission .sp-grid--limits,
+.sp-mission .sp-grid--report { grid-template-columns: repeat(3, minmax(0,1fr)); }
 
-/* Shared by the Safety limitations and Community-first sections, which reuse
-   the .sp-mission panel. A plain list keeps the limits scannable, and the
-   bullets are drawn with a border so no list-style marker is needed. */
+.sp-mission .sp-block {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.035);
+  transition: border-color .24s ease, background .24s ease;
+}
+.sp-mission .sp-block:hover { border-color: var(--line-strong); background: rgba(255,255,255,.06); }
+.sp-mission .sp-block h3,
+.sp-mission .sp-block h4 {
+  margin: 0; color: var(--text);
+  font: 600 15px/1.4 var(--display); letter-spacing: -.02em;
+}
+.sp-mission .sp-block p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.65; }
+
+/* Limits read as structured warning blocks: a quiet left accent, with the one
+   most safety-critical item (emergency services) in the palette's amber. */
+.sp-mission .sp-grid--limits .sp-block {
+  border-left-width: 2px; border-left-color: var(--line-strong);
+}
+.sp-mission .sp-grid--limits .sp-block:first-child {
+  border-left-color: rgba(229,189,124,.6);
+}
+
 .sp-mission .sp-subhead {
-  margin: 28px 0 12px; font-size: 16px; color: #111827;
+  margin: 34px 0 0; color: var(--text);
+  font: 600 17px var(--display); letter-spacing: -.02em;
 }
-.sp-mission .sp-list {
-  list-style: none; margin: 24px 0 0; padding: 0;
-  display: grid; gap: 12px;
-}
-.sp-mission .sp-list li {
-  position: relative; padding: 0 0 0 24px;
-  color: #4b5563; font-size: 14.5px; line-height: 1.6;
-}
-.sp-mission .sp-list li:before {
-  content: ""; position: absolute; left: 2px; top: 8px;
-  width: 7px; height: 7px; border-radius: 2px;
-  background: var(--sp-line); border: 1px solid #9ca3af;
-}
-.sp-mission .sp-list b { color: var(--sp-ink); }
 
-/* The white panel needs to breathe on a narrow screen, where the page padding
-   is smaller and the three beliefs stack into one column. */
-@media (max-width: 760px) {
-  .sp-mission { margin: 40px auto 0; padding: 28px 20px; border-radius: 18px; }
-  .sp-mission .beliefs { grid-template-columns: 1fr; }
+/* ---- icon chips, shared by the beliefs and the reporting blocks ---- */
+.sp-mission .belief__icon,
+.sp-mission .sp-block__icon {
+  display: grid; place-items: center; width: 42px; height: 42px;
+  border: 1px solid var(--line-strong); border-radius: 12px;
+  background: rgba(255,255,255,.05); color: var(--safe);
+}
+.sp-mission .belief__icon svg,
+.sp-mission .sp-block__icon svg {
+  width: 22px; height: 22px; fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---- the closing note, reused by the mission and community sections ---- */
+.sp-mission .note {
+  margin: 30px 0 0; padding: 18px 22px;
+  border: 1px solid var(--line); border-left: 3px solid var(--safe);
+  border-radius: var(--radius-sm); background: rgba(255,255,255,.045);
+  color: var(--muted); font-size: 13.5px; line-height: 1.7;
+}
+.sp-mission .note strong { color: var(--text); }
+
+/* ---- responsive: match the .app padding steps, then collapse the grids ---- */
+@media (max-width: 1050px) {
+  .sp-mission { padding: 44px 32px; }
+  .sp-mission .sp-grid--limits,
+  .sp-mission .sp-grid--report { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 900px) {
+  .sp-closing { padding: 0 16px 8px; gap: 18px; }
+  .sp-mission { padding: 36px 24px; }
+  .sp-mission .beliefs,
+  .sp-mission .sp-grid--limits,
+  .sp-mission .sp-grid--report { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .sp-closing { gap: 14px; }
+  .sp-mission { padding: 28px 18px; border-radius: var(--radius-sm); }
+  .sp-mission h2 { font-size: 26px; }
+  .sp-mission .lead { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-mission .belief, .sp-mission .sp-block { transition: none; }
+  .sp-mission .belief:hover { transform: none; }
 }
 
