@@ -18,12 +18,12 @@
    security rules in firestore.rules, not by hiding this key.
    ========================================================================== */
 window.SAFEPATH_FIREBASE = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyAbFTQ8w_czd6gFUYC3w0YB_SAaWoL5YdU',
+  authDomain: 'safepath-4ec9f.firebaseapp.com',
+  projectId: 'safepath-4ec9f',
+  storageBucket: 'safepath-4ec9f.firebasestorage.app',
+  messagingSenderId: '446394587147',
+  appId: '1:446394587147:web:4022e23838987bb6ad4f0e',
 };
 
 /* Optional: the region your Firestore database lives in. Leave blank for the
