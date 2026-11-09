@@ -335,6 +335,70 @@ window.SAFEPATH_FIRESTORE_REGION = '';`;
     check('the WhatsApp link targets the saved number', /wa\.me\/919876543210/.test(links.wa), links.wa.slice(0, 45));
     check('the message is previewed on screen', links.preview.includes('I need help'));
 
+    /* ------------------- 7b. one-tap alert to everyone ------------------ */
+    console.log('\n7b. One-tap alert to every contact');
+    check('the bulk actions are visible with a saved contact',
+      await page.evaluate(() => !document.getElementById('emergencyBulk').hidden));
+    check('Text all and WhatsApp all are both offered',
+      await page.evaluate(() => !!document.getElementById('alertAllSmsBtn')
+        && !!document.getElementById('alertAllWhatsappBtn')));
+
+    // A second contact, so "all" genuinely means more than one.
+    await page.evaluate(async () => {
+      await window.SafePathAuth.addContact({ name: 'Appa', phone: '+91 90000 22222', relationship: 'Father' });
+    });
+    await wait(500);
+    check('two contacts are saved for the bulk check',
+      await page.evaluate(() => window.SafePathAuth.state.contacts.length === 2));
+
+    // The sms: URL is what a single-tap "text everyone" produces. Built by a
+    // pure function, so no navigation is needed to assert it.
+    const smsHref = await page.evaluate(() => window.SafePathAuthUI.buildSmsAllHref());
+    check('Text all addresses every saved contact in one link',
+      !!smsHref && /^sms:/.test(smsHref)
+        && smsHref.includes('919876543210') && smsHref.includes('919000022222'),
+      (smsHref || '').split('?')[0]);
+    check('Text all uses a comma-separated recipient list (one composer)',
+      !!smsHref && smsHref.split('?')[0].split('&')[0].split(',').length === 2,
+      (smsHref || '').split('?')[0]);
+    check('Text all carries the live-location message',
+      !!smsHref && decodeURIComponent(smsHref).includes('I need help. My location: https://maps.google.com/?q=12.30520,76.65540'),
+      (smsHref || '').slice(-60));
+
+    // Prove the button reaches the handler without navigating: with no alertable
+    // contacts the handler takes its early-return path, so no sms: navigation
+    // fires (which would destabilise the rest of the headless run).
+    const wired = await page.evaluate(() => {
+      const saved = window.SafePathAuth.state.contacts;
+      window.SafePathAuth.state.contacts = [];
+      document.getElementById('alertAllSmsBtn').click();
+      const msg = document.getElementById('alertAllProgress').textContent;
+      window.SafePathAuth.state.contacts = saved;
+      return msg;
+    });
+    check('the Text all button is wired to the bulk handler',
+      /Add a contact first/i.test(wired), wired);
+
+    // WhatsApp has no multi-recipient link, so each contact gets its own chat.
+    const waUrls = await page.evaluate(async () => {
+      const seen = [];
+      const realOpen = window.open;
+      window.open = (url) => { seen.push(url); return {}; };
+      await window.SafePathAuthUI.alertAllByWhatsapp();
+      window.open = realOpen;
+      return seen;
+    });
+    check('WhatsApp all opens one chat per contact',
+      waUrls.length === 2, `opened ${waUrls.length}`);
+    check('the WhatsApp chats target the saved numbers',
+      waUrls.some((u) => /wa\.me\/919876543210/.test(u)) && waUrls.some((u) => /wa\.me\/919000022222/.test(u)),
+      waUrls.map((u) => u.slice(8, 26)).join(' | '));
+    check('each WhatsApp chat is pre-filled with the location message',
+      waUrls.every((u) => decodeURIComponent(u).includes('https://maps.google.com/?q=')),
+      (waUrls[0] || '').slice(0, 60));
+    check('the WhatsApp progress line reports how many were opened',
+      await page.evaluate(() => /2 WhatsApp chats/i.test(document.getElementById('alertAllProgress').textContent)));
+
     check('the UI never claims a message was sent',
       await page.evaluate(() => {
         const t = document.getElementById('emergencyPanel').textContent;
@@ -343,8 +407,8 @@ window.SAFEPATH_FIRESTORE_REGION = '';`;
     check('Call 112 is still available when signed in',
       await page.evaluate(() => document.getElementById('call112Btn').getAttribute('href') === 'tel:112'));
 
-    /* ------------------- 7b. five-contact limit ------------------------- */
-    console.log('\n7b. Five-contact limit and consent note');
+    /* ------------------- 7c. five-contact limit ------------------------- */
+    console.log('\n7c. Five-contact limit and consent note');
     check('the consent note is shown before adding',
       await page.evaluate(() => /Only add people who know you/i.test(document.querySelector('.contactform__consent').textContent)));
 

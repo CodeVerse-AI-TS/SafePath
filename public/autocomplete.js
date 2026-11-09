@@ -162,6 +162,8 @@
    * @param {(lat:number, lng:number) => Promise<string|null>} [opts.placeName]
    *        turns a resolved position into a real place name, so "Current
    *        location" is replaced by where the user actually is.
+   * @param {() => void} [opts.onOpen]  called when the dropdown opens
+   * @param {() => void} [opts.onClose] called when it closes
    */
   function create(opts) {
     const input = document.getElementById(opts.inputId);
@@ -256,12 +258,14 @@
 
     function render() {
       if (!st.rows.length) { close(); return; }
+      const wasOpen = st.open;
       list.innerHTML = st.rows.map(renderRow).join('');
       list.hidden = false;
       wrap.classList.add('is-open');
       input.setAttribute('aria-expanded', 'true');
       st.open = true;
       setActive(st.active, { scroll: false });
+      if (!wasOpen && opts.onOpen) opts.onOpen();
     }
 
     function renderStatus(html) {
@@ -277,12 +281,14 @@
       st.seq++;
       if (st.controller) st.controller.abort();
       if (st.debounceTimer) { clearTimeout(st.debounceTimer); st.debounceTimer = null; }
+      const wasOpen = st.open;
       list.hidden = true;
       wrap.classList.remove('is-open');
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
       st.open = false;
       st.active = -1;
+      if (wasOpen && opts.onClose) opts.onClose();
     }
 
     function announce(msg) { status.textContent = msg; }

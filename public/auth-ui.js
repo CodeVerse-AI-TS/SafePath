@@ -330,16 +330,92 @@
     return 'I need help. My location is not available — please call me.';
   }
 
+  // The most recent position handed over by the panic flow. Kept so the bulk
+  // buttons can build a real message without a second, slower location read.
+  let lastFix = null;
+
+  /** Digits only, so "sms:" and wa.me both accept the number. */
+  const digitsOf = (phone) => String(phone || '').replace(/[^0-9]/g, '');
+
+  /** Saved contacts that actually have a usable number. */
+  function alertableContacts() {
+    return (Auth.state.contacts || []).filter((c) => digitsOf(c.phone).length >= 8);
+  }
+
+  /** The message the bulk buttons will send, from the last known position. */
+  function currentMessage() {
+    return lastFix ? buildMessage(lastFix.lat, lastFix.lng) : buildMessage();
+  }
+
+  function showBulkProgress(msg) {
+    const el = $('#alertAllProgress');
+    if (!el) return;
+    el.hidden = !msg;
+    el.textContent = msg || '';
+  }
+
+  /**
+   * The sms: URL that texts every saved contact at once. The scheme takes a
+   * comma-separated recipient list, so this is a single message addressed to
+   * everyone — one navigation, one send, the fastest way to reach the circle.
+   * Returns null when there is nobody to text.
+   */
+  function buildSmsAllHref() {
+    const contacts = alertableContacts();
+    if (!contacts.length) return null;
+    const encoded = encodeURIComponent(currentMessage());
+    const recipients = contacts.map((c) => digitsOf(c.phone)).join(',');
+    // iOS uses "&body=" after the address list; everything else uses "?body=".
+    const sep = /iPhone|iPad|Macintosh/.test(navigator.userAgent) ? '&' : '?';
+    return `sms:${recipients}${sep}body=${encoded}`;
+  }
+
+  /** Text everyone in one tap. */
+  function alertAllBySms() {
+    const href = buildSmsAllHref();
+    if (!href) { showBulkProgress('Add a contact first.'); return; }
+    const n = alertableContacts().length;
+    window.location.href = href;
+    showBulkProgress(`One message to ${n} contact${n === 1 ? '' : 's'} is open — press send.`);
+  }
+
+  /**
+   * WhatsApp has no multi-recipient link, so each contact gets its own chat.
+   * Browsers only honour the first navigation inside a click, so the rest are
+   * opened in sequence and the progress line reports what actually happened
+   * rather than pretending all of them were sent.
+   */
+  async function alertAllByWhatsapp() {
+    const contacts = alertableContacts();
+    if (!contacts.length) { showBulkProgress('Add a contact first.'); return; }
+    const encoded = encodeURIComponent(currentMessage());
+    let opened = 0;
+    for (const c of contacts) {
+      if (opened > 0) await new Promise((r) => setTimeout(r, 400));
+      const url = `https://wa.me/${digitsOf(c.phone)}?text=${encoded}`;
+      const win = window.open(url, '_blank', 'noopener');
+      if (win) opened++;
+      showBulkProgress(`Opening WhatsApp — ${opened} of ${contacts.length}…`);
+    }
+    showBulkProgress(opened === contacts.length
+      ? `Opened ${opened} WhatsApp chat${opened === 1 ? '' : 's'} — press send in each.`
+      : `Opened ${opened} of ${contacts.length} chats. Your browser blocked the rest — use the buttons below.`);
+  }
+
   function renderEmergency(snap) {
     const guest = $('#emergencyGuest');
     const contactsBox = $('#emergencyContacts');
     const list = $('#emergencyList');
     const empty = $('#emergencyEmpty');
+    const bulk = $('#emergencyBulk');
     if (!guest || !contactsBox) return;
 
     const signedIn = !!snap.user;
     guest.hidden = signedIn;
     contactsBox.hidden = !signedIn;
+    // The bulk actions only make sense with at least one usable number.
+    if (bulk) bulk.hidden = !signedIn || alertableContacts().length === 0;
+    showBulkProgress('');
 
     const preview = $('#emergencyMessagePreview');
     if (preview) {
@@ -367,6 +443,7 @@
 
   /** Fill every Text/WhatsApp link with the real message for a known position. */
   function applyLocationToLinks(lat, lng) {
+    lastFix = { lat, lng };
     const msg = buildMessage(lat, lng);
     const encoded = encodeURIComponent(msg);
     $$('#emergencyList a[data-act]').forEach((a) => {
@@ -474,6 +551,8 @@
     $('#contactCancelBtn')?.addEventListener('click', resetContactForm);
     $('#contactList')?.addEventListener('click', onContactListClick);
     $('#emergencyManageBtn')?.addEventListener('click', openContacts);
+    $('#alertAllSmsBtn')?.addEventListener('click', alertAllBySms);
+    $('#alertAllWhatsappBtn')?.addEventListener('click', alertAllByWhatsapp);
 
     $('#privacyCloseBtn')?.addEventListener('click', () => closeSheet('privacySheet'));
     $('#privacyDeleteContactsBtn')?.addEventListener('click', handleDeleteAllContacts);
@@ -498,7 +577,13 @@
     maybeShowWelcome();
 
     // Let the panic flow hand the resolved position to the contact links.
-    window.SafePathAuthUI = { prepareEmergencyActions, openAuth, openContacts, openPrivacy, buildMessage, revealEmergency };
+    window.SafePathAuthUI = {
+      prepareEmergencyActions, openAuth, openContacts, openPrivacy,
+      buildMessage, revealEmergency,
+      // Exposed so the smoke test can assert the bulk behaviour without
+      // actually opening a messaging app.
+      alertAllBySms, alertAllByWhatsapp, alertableContacts, currentMessage, buildSmsAllHref,
+    };
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

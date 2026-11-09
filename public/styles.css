@@ -781,6 +781,11 @@ body.nav-active .app { display: none; }
 
 .emergencyrow__actions .btn { min-height: 36px; padding: 7px 12px; }
 
+/* Bulk actions sit above the per-contact rows, so the fastest option is the
+   first one reached. */
+.emergencybulk { display: grid; gap: 8px; margin: 0 0 14px; }
+#alertAllProgress { margin: 0; }
+
 .emergencycall { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 
 #emergencyMessagePreview {
@@ -891,6 +896,36 @@ body.nav-active .app { display: none; }
 
 .map-search,
 .map-overlay { z-index: 1100; }
+
+/* The map search dropdown has to clear every other map control. The chips, the
+   legend and the bottom buttons sit at 1100 and Leaflet's zoom control at 1000,
+   while .ac__list is only 40 inside the search box's own stacking context — so
+   the chips painted over the first result. Lifting the search box itself while
+   it is open raises its whole subtree, dropdown included, above all of them. */
+.map-wrap.is-searching .map-search { z-index: 1200; }
+
+/* The chips share the search box's row and crowd the list even when they no
+   longer cover it, so they step aside while it is open and return when it
+   closes (clear, Escape, map click or picking a result). The delayed
+   visibility is on the hidden state so the fade is visible on the way out and
+   the chips return at once on the way back. */
+.map-overlay--tl { transition: opacity .18s ease, visibility 0s; }
+.map-wrap.is-searching .map-overlay--tl {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, visibility 0s linear .18s;
+}
+
+/* Keep the map dropdown inside the map with its own scrolling, and stop a
+   flick of its scroll from chaining out to the page behind it. The base
+   .ac__list already caps the height and scrolls; this tightens the cap on
+   wider screens, where 46vh keeps a long list clear of the map's bottom edge.
+   Scoped above the mobile breakpoint so the mobile cap stays as tuned. */
+.map-wrap .ac__list { overscroll-behavior: contain; }
+@media (min-width: 521px) {
+  .map-wrap .ac__list { max-height: min(46vh, 320px); }
+}
 
 /* Leaflet's zoom control owns the top-left corner at z-index 1000. The search
    box shares that row but starts to its right, so the two never cover each

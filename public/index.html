@@ -363,6 +363,17 @@
 
           <div id="emergencyContacts" hidden>
             <p class="card__sub" id="emergencyMessagePreview"></p>
+
+            <!-- One tap for everyone. "Text all" opens a single composer
+                 addressed to every contact, so it is one message and one send.
+                 "WhatsApp all" has no multi-recipient link, so it opens a chat
+                 per contact and reports how many the browser allowed. -->
+            <div class="emergencybulk" id="emergencyBulk">
+              <button class="btn btn--primary btn--block" id="alertAllSmsBtn" type="button">Text all contacts</button>
+              <button class="btn btn--block" id="alertAllWhatsappBtn" type="button">WhatsApp all contacts</button>
+              <p class="card__sub" id="alertAllProgress" role="status" aria-live="polite" hidden></p>
+            </div>
+
             <ul class="emergencylist" id="emergencyList"></ul>
             <p class="contactlist__empty" id="emergencyEmpty" hidden>
               No emergency contacts saved yet.

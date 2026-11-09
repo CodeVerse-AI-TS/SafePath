@@ -1110,6 +1110,10 @@ function initAutocomplete() {
     near: () => biasOrigin('map'),
     safety: true,
     time: () => departureISO(),
+    // While the dropdown is open the chips step aside and the search box lifts
+    // above the other map controls, so the first result is never covered.
+    onOpen: () => { const m = $('#mapSearchInput').closest('.map-wrap'); if (m) m.classList.add('is-searching'); },
+    onClose: () => { const m = $('#mapSearchInput').closest('.map-wrap'); if (m) m.classList.remove('is-searching'); },
     onSelect: (place) => {
       dropSearchMarker('map', place, place.name);
       toast('mapStatus', `Centred on ${place.name}`, 'ok');
