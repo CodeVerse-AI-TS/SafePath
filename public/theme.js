@@ -1,91 +1,80 @@
 /* SafePath theme controller.
  *
- * Three choices: light, dark, or system. The choice is saved in localStorage and
- * applied as data-theme on <html>, which is what styles.css keys off. The
- * attribute is set once more in a small inline script in <head> so a light-mode
- * visitor never sees a flash of the dark theme before this file loads.
+ * Two themes: light and dark. The choice is saved in localStorage and applied as
+ * data-theme on <html>, which is what styles.css keys off. The attribute is set
+ * once more in a small inline script in <head> so a light-mode visitor never
+ * sees a flash of the dark theme before this file loads.
  *
- * "System" follows the operating system and keeps following it: a change to the
- * OS preference re-applies the theme while that choice is selected.
+ * There is one button in the top bar. It shows the icon for the theme you would
+ * switch to — a sun while dark is active, a moon while light is — and swaps the
+ * two. The accessible name says the same thing, so it reads as an action.
  */
 (function () {
   'use strict';
 
   var STORAGE_KEY = 'safepath-theme';
-  var CHOICES = ['light', 'dark', 'system'];
-  var DEFAULT_CHOICE = 'dark';
+  var THEMES = ['light', 'dark'];
+  var DEFAULT_THEME = 'dark';
   var THEME_COLOR = { light: '#f4f5f7', dark: '#101114' };
+  var ACTION_LABEL = { light: 'Switch to dark theme', dark: 'Switch to light theme' };
 
   var root = document.documentElement;
-  var picker = document.getElementById('themePick');
-  var opts = picker ? Array.prototype.slice.call(picker.querySelectorAll('.themepick__opt')) : [];
-  var mq = window.matchMedia('(prefers-color-scheme: light)');
+  var button = document.getElementById('themeToggle');
 
-  /** The saved choice, or the default when nothing is saved or it is unreadable. */
-  function savedChoice() {
+  /** The saved theme, or the default when nothing is saved or it is unreadable. */
+  function savedTheme() {
     try {
       var v = localStorage.getItem(STORAGE_KEY);
-      return CHOICES.indexOf(v) >= 0 ? v : DEFAULT_CHOICE;
+      return THEMES.indexOf(v) >= 0 ? v : DEFAULT_THEME;
     } catch (e) {
-      return DEFAULT_CHOICE;
+      return DEFAULT_THEME;
     }
   }
 
-  /** The theme a choice resolves to right now. */
-  function resolve(choice) {
-    if (choice === 'light' || choice === 'dark') return choice;
-    return mq.matches ? 'light' : 'dark';
+  /** The theme that clicking the button would move to. */
+  function other(theme) {
+    return theme === 'light' ? 'dark' : 'light';
   }
 
-  /** Repaint the picker so the selected option is the one marked pressed. */
-  function paint(choice) {
-    opts.forEach(function (b) {
-      var on = b.getAttribute('data-theme-choice') === choice;
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-  }
-
-  function apply(choice) {
-    var theme = resolve(choice);
-    // Only write when something actually changes. Setting these attributes
+  function apply(theme) {
+    // Only write when something actually changes. Setting this attribute
     // invalidates style for the whole document, because the light theme is
     // keyed off html[data-theme], and a needless restyle at load is enough to
     // disturb the page's entry animation.
     if (root.getAttribute('data-theme') !== theme) root.setAttribute('data-theme', theme);
-    if (root.getAttribute('data-theme-choice') !== choice) root.setAttribute('data-theme-choice', choice);
     // Keep the browser UI in step with the page.
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta && meta.getAttribute('content') !== THEME_COLOR[theme]) {
       meta.setAttribute('content', THEME_COLOR[theme]);
     }
-    paint(choice);
+    if (button) {
+      var label = ACTION_LABEL[theme];
+      if (button.getAttribute('aria-label') !== label) {
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
+      }
+    }
   }
 
-  function choose(choice) {
-    if (CHOICES.indexOf(choice) < 0) return;
-    try { localStorage.setItem(STORAGE_KEY, choice); } catch (e) { /* private mode */ }
-    apply(choice);
+  function choose(theme) {
+    if (THEMES.indexOf(theme) < 0) return;
+    try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) { /* private mode */ }
+    apply(theme);
   }
 
-  opts.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      choose(btn.getAttribute('data-theme-choice'));
+  if (button) {
+    button.addEventListener('click', function () {
+      choose(other(root.getAttribute('data-theme')));
     });
-  });
+  }
 
-  // While "system" is selected, follow the OS when it changes. Older Safari
-  // only has addListener, so fall back to it.
-  function onSystemChange() { if (savedChoice() === 'system') apply('system'); }
-  if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
-  else if (mq.addListener) mq.addListener(onSystemChange);
+  apply(savedTheme());
 
-  apply(savedChoice());
-
-  // Exposed so the smoke test can drive the picker without clicking.
+  // Exposed so the smoke test can drive the toggle without clicking.
   window.SafePathTheme = {
     choose: choose,
-    savedChoice: savedChoice,
-    resolve: resolve,
+    savedTheme: savedTheme,
+    other: other,
     STORAGE_KEY: STORAGE_KEY,
   };
 })();

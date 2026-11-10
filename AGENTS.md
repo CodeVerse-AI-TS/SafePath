@@ -310,24 +310,46 @@ SafePath works with no account. Everything below exists to keep it that way.
   plum → charcoal) and only the last block wins. Measure the rendered pixel
   colour before "restoring" a theme from a comment.
 - **`public/theme.js` is the single owner of the theme.** An inline script in
-  `<head>` only *reads* the saved preference and sets `data-theme` /
-  `data-theme-choice` before first paint, to avoid a flash of the wrong theme.
-  `theme.js` performs the switching. Keep both in step.
-- **A first-time visitor gets the dark theme.** `DEFAULT_CHOICE` is `dark`, not
-  `system`. "System" is an explicit choice. Defaulting to `system` makes the
-  site render light for anyone whose OS is light, which changes the product's
-  appearance for existing visitors and fails the visual suites.
+  `<head>` only *reads* the saved preference and sets `data-theme` before first
+  paint, to avoid a flash of the wrong theme. `theme.js` performs the switching.
+  Keep both in step.
+- **There are exactly two themes, light and dark, and one button to swap them.**
+  There is no "system" option and the OS preference is deliberately ignored — do
+  not reintroduce a `matchMedia` listener or a third choice. The stored value is
+  the theme itself (`light` or `dark`) in `safepath-theme`.
+- **A first-time visitor gets the dark theme.** `DEFAULT_THEME` is `dark`, which
+  is what the site has always looked like. Defaulting to the OS preference makes
+  the site render light for anyone whose OS is light, which changes the product's
+  appearance and fails the visual suites.
+- **The toggle shows the theme you would switch to**, not the current one: the
+  sun while dark is active, the moon while light is. CSS decides this from
+  `html[data-theme]`; `theme.js` sets the matching `aria-label`/`title` in words.
+  Keep the two in agreement if you touch either.
 - **The light theme is an override layer keyed on `html[data-theme="light"]`.**
   It must out-specify the stacked dark blocks, so every rule repeats the
-  `html[data-theme="light"]` ancestor rather than relying on source order.
-- **The theme picker must not change the top bar's height.** The top bar is
-  `height:76px` below 900px and `92px` above. If the picker adds a wrapped row,
-  the sticky tab strip is pushed out of alignment and clicks land on the wrong
-  element. Below 520px the picker becomes three bare 34px icons (labels are
-  visually hidden but remain the accessible name) and `.topbar__spacer` is
-  hidden, which keeps the bar at its documented height from 320px up.
-- **Only write `data-theme` when the value changes.** `theme.js` sets these
-  attributes on `<html>`, and the light layer is keyed off them, so a redundant
+  `html[data-theme="light"]` ancestor rather than relying on source order. Note
+  that a `html[data-theme="light"] .x` rule also out-specifies a plain `.x` rule
+  in a media query, so any mobile override of a themed element needs its own
+  `html[data-theme="light"]` counterpart.
+- **The theme toggle sits to the right of the account control.** It is the last
+  child of `.topbar`, so it is the element that gets clipped if the row
+  overflows. Keep it last; do not move it back beside the brand.
+- **The toggle must not change the top bar's height.** The top bar is
+  `height:76px` below 900px and `92px` above. If it wraps to a second row, the
+  sticky tab strip is pushed out of alignment and clicks land on the wrong
+  element. It is 40px by default, 34px below 900px, and 30px (frameless) below
+  520px, where `.topbar__spacer` also steps aside.
+- **The status chips are hidden at 900px.** Brand + account + toggle already need
+  most of the row; the three chips add ~440px and push the row wider than the
+  viewport. This is the same trade the 520px rule made.
+- **`.authbar__user` needs an explicit `[hidden]` rule.** The class sets
+  `display:flex`, which out-specifies the UA rule for `[hidden]`, so a signed-out
+  user box still laid out and ate ~120px of the bar — enough to wrap the toggle
+  at 390px. The stylesheet already does this for `.nav`, `.sheet` and
+  `.installbar`; follow that pattern for any new flex container toggled by
+  `hidden`.
+- **Only write `data-theme` when the value changes.** `theme.js` sets this
+  attribute on `<html>`, and the light layer is keyed off it, so a redundant
   write at load invalidates style for the whole document and can disturb the
   entry animation.
 

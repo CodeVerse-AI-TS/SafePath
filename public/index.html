@@ -11,16 +11,12 @@
      sees a flash of the dark theme. theme.js owns the switching; this only
      reads the preference and sets the attribute the CSS keys off.
      A first-time visitor gets the dark theme, which is what the site has always
-     looked like — "system" is an explicit choice, not the default. */
+     looked like. */
   (function () {
     try {
       var c = localStorage.getItem('safepath-theme');
-      if (c !== 'light' && c !== 'dark' && c !== 'system') c = 'dark';
-      var m = c === 'system'
-        ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-        : c;
-      document.documentElement.setAttribute('data-theme', m);
-      document.documentElement.setAttribute('data-theme-choice', c);
+      if (c !== 'light' && c !== 'dark') c = 'dark';
+      document.documentElement.setAttribute('data-theme', c);
     } catch (e) {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
@@ -76,39 +72,6 @@
     </div>
     <div class="topbar__spacer"></div>
 
-    <!-- Theme selector. Each option is one button holding an inline SVG drawn
-         to match the reference: an eight-ray solid sun, a solid crescent moon,
-         and a circle split into a solid black left half and a light right half.
-         The label sits under the icon and the whole cell is clickable. -->
-    <div class="themepick" id="themePick" role="group" aria-label="Colour theme">
-      <button class="themepick__opt" type="button" data-theme-choice="light" aria-pressed="false">
-        <svg class="themepick__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-          <circle cx="24" cy="24" r="9"/>
-          <g stroke-width="4" stroke-linecap="round">
-            <path d="M24 4.5v5"/><path d="M24 38.5v5"/>
-            <path d="M4.5 24h5"/><path d="M38.5 24h5"/>
-            <path d="M10.2 10.2 13.8 13.8"/><path d="M34.2 34.2 37.8 37.8"/>
-            <path d="M37.8 10.2 34.2 13.8"/><path d="M13.8 34.2 10.2 37.8"/>
-          </g>
-        </svg>
-        <span class="themepick__label">Light</span>
-      </button>
-      <button class="themepick__opt" type="button" data-theme-choice="dark" aria-pressed="false">
-        <svg class="themepick__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-          <path d="M36.2 31.6A15.5 15.5 0 0 1 16.4 11.8 15.5 15.5 0 1 0 36.2 31.6Z"/>
-        </svg>
-        <span class="themepick__label">Dark</span>
-      </button>
-      <button class="themepick__opt" type="button" data-theme-choice="system" aria-pressed="false">
-        <svg class="themepick__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-          <circle class="themepick__half" cx="24" cy="24" r="19"/>
-          <path class="themepick__left" d="M24 5A19 19 0 0 0 24 43Z"/>
-          <circle class="themepick__ring" cx="24" cy="24" r="19" fill="none" stroke-width="3.4"/>
-        </svg>
-        <span class="themepick__label">System</span>
-      </button>
-    </div>
-
     <span class="chip chip--sample" id="dataChip" title="Which data the app is running on">sample data</span>
     <span class="chip" title="SafePath is free for everyone">free public tool</span>
     <span class="chip" id="modelChip" title="Model build time">model —</span>
@@ -130,6 +93,24 @@
         </div>
       </div>
     </div>
+    <!-- Theme toggle. One button that swaps between the dark and light themes.
+         It holds both icons and CSS shows the one for the theme you would switch
+         to: the sun while dark is active, the moon while light is. The icons are
+         drawn in currentColor, so they invert with the page. -->
+    <button class="themetoggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme">
+      <svg class="themetoggle__icon themetoggle__icon--sun" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <circle cx="24" cy="24" r="9"/>
+        <g stroke-width="4" stroke-linecap="round">
+          <path d="M24 4.5v5"/><path d="M24 38.5v5"/>
+          <path d="M4.5 24h5"/><path d="M38.5 24h5"/>
+          <path d="M10.2 10.2 13.8 13.8"/><path d="M34.2 34.2 37.8 37.8"/>
+          <path d="M37.8 10.2 34.2 13.8"/><path d="M13.8 34.2 10.2 37.8"/>
+        </g>
+      </svg>
+      <svg class="themetoggle__icon themetoggle__icon--moon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path d="M36.2 31.6A15.5 15.5 0 0 1 16.4 11.8 15.5 15.5 0 1 0 36.2 31.6Z"/>
+      </svg>
+    </button>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
