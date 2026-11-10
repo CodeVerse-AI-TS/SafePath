@@ -48,6 +48,35 @@ function check(name, ok, detail) {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
+ * Switch to the Overview tab and wait until the page really has a laid-out box.
+ * Two things race a plain "click then sleep": the fade-up on <main> runs for
+ * 500ms, and the route search from the previous step lands asynchronously and
+ * switches to the Route tab, hiding Overview again. Either way the map search
+ * ends up 0x0, which Puppeteer reports as "Node is either not clickable or not
+ * an Element". So click, then require Overview to stay visible for a sustained
+ * window, re-clicking if the late route response steals the tab back.
+ */
+async function showOverview(page, timeoutMs = 8000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await page.click('#tab-overview');
+    let heldFor = 0;
+    while (Date.now() < deadline && heldFor < 900) {
+      const visible = await page.evaluate(() => {
+        const p = document.getElementById('page-overview');
+        if (!p || p.hidden) return false;
+        const r = p.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      if (!visible) break;
+      heldFor += 100;
+      await wait(100);
+    }
+    if (heldFor >= 900) return;
+  }
+}
+
+/**
  * Wait until a listbox actually holds selectable option rows (or a non-loading
  * status). The upstream provider is occasionally slow, so poll rather than
  * sleeping a fixed time.
@@ -371,8 +400,7 @@ async function waitForOptions(page, listboxId, timeoutMs = 9000) {
     // The route search in step 10 switches to the Safe route tab, which hides
     // the Overview page that owns #mapSearchInput. Return to Overview first, or
     // this click has nothing laid out to hit.
-    await page.click('#tab-overview');
-    await wait(500);
+    await showOverview(page);
     const mapSearch = await page.evaluate(() => {
       const el = document.getElementById('mapSearchInput');
       if (!el) return null;
@@ -393,8 +421,7 @@ async function waitForOptions(page, listboxId, timeoutMs = 9000) {
     console.log('\n12. 320px layout');
     // The route search above switched to the Safe route tab, which hides the
     // Overview page (and therefore the From field). Go back before measuring.
-    await page.click('#tab-overview');
-    await wait(500);
+    await showOverview(page);
     await page.setViewport({ width: 320, height: 640 });
     await wait(700);
     // Type via the DOM: on a 320px viewport the on-screen layout can put the

@@ -1103,3 +1103,387 @@ body.nav-active .app { display: none; }
   .sp-mission .belief:hover { transform: none; }
 }
 
+/* ==========================================================================
+   Theme selector — light / dark / system
+   --------------------------------------------------------------------------
+   Three hand-drawn SVGs in one row, label under each. The icons are drawn in
+   currentColor so they invert with the page; the system icon is the exception,
+   because its whole point is a solid dark half against a light half, so its two
+   halves are painted from fixed tones that survive either theme.
+   ========================================================================== */
+.themepick {
+  /* The site's green accent. The forest-green palette value is still in this
+     stylesheet (line 8), so the picker can use the real green rather than the
+     silver that the charcoal direction put in --safe. */
+  --accent: #a1d8b1;
+  display: flex; align-items: flex-start; gap: 2px;
+  margin-right: 10px; padding: 4px;
+  border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(255,255,255,.04);
+}
+.themepick__opt {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  width: 62px; padding: 7px 4px 6px;
+  border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--muted);
+  transition: color .2s ease, background .2s ease, border-color .2s ease;
+}
+.themepick__opt:hover { color: var(--text); background: rgba(255,255,255,.07); }
+.themepick__opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Selected state: the accent, kept to a tint and a border so it stays subtle.
+   The icons themselves stay black-and-white as in the reference. */
+.themepick__opt[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(161,216,177,.16);
+}
+
+.themepick__icon {
+  width: 30px; height: 30px;
+  fill: currentColor; stroke: currentColor;
+  overflow: visible;
+}
+.themepick__icon .themepick__ring { stroke: currentColor; }
+/* The split circle: fixed tones, so the black half reads as black and the light
+   half reads as light on either page background. */
+.themepick__icon .themepick__half { fill: #f2f3f5; stroke: none; }
+.themepick__icon .themepick__left { fill: #14161a; stroke: none; }
+.themepick__label {
+  font: 600 10px var(--mono); letter-spacing: .06em; text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  /* The chips already drop at this width; the picker stays, and sheds its
+     labels so all three options still fit on one row. */
+  .themepick { margin-right: 6px; gap: 0; }
+  .themepick__opt { width: 46px; padding: 6px 3px; }
+  .themepick__label {
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap;
+  }
+}
+@media (max-width: 520px) {
+  /* A phone top bar has no room for a framed picker beside the account button,
+     so it becomes three bare icons and the flex spacer steps aside. Keeping the
+     picker this small is what stops the bar from growing an extra row, which
+     would otherwise push the sticky tab strip out of alignment. */
+  .topbar__spacer { display: none; }
+  .themepick {
+    border: 0; background: transparent; padding: 0; gap: 0; margin-right: 4px;
+  }
+  .themepick__opt { width: 34px; padding: 6px 2px; border-radius: 8px; }
+  .themepick__icon { width: 24px; height: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .themepick__opt { transition: none; }
+}
+
+/* ==========================================================================
+   Light theme
+   --------------------------------------------------------------------------
+   styles.css carries several stacked dark palettes (forest green, plum, then
+   charcoal), each overriding the last. Rather than unpick them, this block
+   re-points the same custom properties and repaints the components that were
+   given literal colours, guarded by html[data-theme="light"]. It is the last
+   block in the file and its selectors carry the extra html[...] ancestor, so it
+   wins over every earlier layer without editing them.
+   ========================================================================== */
+html[data-theme="light"] {
+  --bg: #f4f5f7;
+  --panel: rgba(255,255,255,.86);
+  --panel-2: rgba(255,255,255,.72);
+  --panel-3: rgba(238,240,243,.86);
+  --line: rgba(16,17,20,.12);
+  --line-strong: rgba(16,17,20,.26);
+  --text: #14161a;
+  --muted: #525863;
+  --dim: #666c76;
+  --safe: #2f7a55;
+  --amber: #8a6414;
+  --danger: #a8403a;
+  --info: #3c5a86;
+  --shadow: 0 18px 45px rgba(16,17,20,.10);
+  --glass-hover: rgba(16,17,20,.06);
+  /* The dark layer set a background and a colour on html itself, not only on
+     the variables, so they have to be reset here as well or the page keeps a
+     dark html canvas behind the light body. */
+  background: #f4f5f7;
+  color: var(--text);
+  color-scheme: light;
+}
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(47,122,85,.07), transparent 25rem),
+    linear-gradient(145deg, #f4f5f7, #eceef1 72%, #f2f3f5);
+  color: var(--text);
+}
+
+/* ---- top bar, tabs, brand ---- */
+html[data-theme="light"] .topbar {
+  border-bottom-color: var(--line);
+  background: rgba(244,245,247,.82);
+}
+html[data-theme="light"] .brand__mark {
+  color: #f7f8f9; background: linear-gradient(135deg, #2f7a55, #1e5b3d);
+  box-shadow: 0 0 0 1px rgba(16,17,20,.08), 0 10px 24px rgba(47,122,85,.18);
+}
+html[data-theme="light"] .brand__name { color: var(--text); }
+html[data-theme="light"] .brand__tag { color: var(--muted); }
+html[data-theme="light"] .chip,
+html[data-theme="light"] .status-pill {
+  border-color: var(--line); color: var(--muted); background: rgba(16,17,20,.04);
+}
+html[data-theme="light"] .chip--sample:before { background: var(--amber); }
+html[data-theme="light"] .tabs {
+  border-bottom-color: var(--line);
+  background: rgba(244,245,247,.78);
+}
+html[data-theme="light"] .tab { color: var(--muted); }
+html[data-theme="light"] .tab:hover,
+html[data-theme="light"] .tab:focus-visible {
+  color: var(--text); border-color: var(--line-strong); background: rgba(47,122,85,.08);
+}
+html[data-theme="light"] .tab[aria-selected="true"] {
+  color: var(--text); border-color: rgba(47,122,85,.4); background: rgba(47,122,85,.14);
+}
+html[data-theme="light"] .tab[aria-selected="true"]:hover,
+html[data-theme="light"] .tab[aria-selected="true"]:focus-visible {
+  background: rgba(47,122,85,.2); border-color: rgba(47,122,85,.52);
+}
+html[data-theme="light"] .tab__dot { background: #b3b8bf; }
+html[data-theme="light"] .tab[aria-selected="true"] .tab__dot,
+html[data-theme="light"] .tab:hover .tab__dot,
+html[data-theme="light"] .tab:focus-visible .tab__dot { background: var(--safe); }
+
+/* ---- cards and surfaces ---- */
+html[data-theme="light"] .card {
+  border-color: var(--line);
+  background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(247,248,250,.9));
+  box-shadow: 0 18px 45px rgba(16,17,20,.09), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .card:before { background: linear-gradient(120deg, rgba(255,255,255,.6), transparent 32%); }
+html[data-theme="light"] .card__sub,
+html[data-theme="light"] .disclaimer,
+html[data-theme="light"] .section-sub { color: var(--muted); }
+html[data-theme="light"] .section-title:after { background: var(--safe); }
+html[data-theme="light"] .field label { color: #4c525b; }
+
+/* ---- buttons ---- */
+html[data-theme="light"] .btn {
+  border-color: var(--line-strong); color: var(--text); background: #fbfbfc;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .btn:hover {
+  border-color: rgba(47,122,85,.5); background: #eef4f0;
+  box-shadow: 0 8px 20px rgba(16,17,20,.08), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .btn--primary {
+  color: #fff; border-color: transparent;
+  background: linear-gradient(135deg, #3a8a61, #2f7a55);
+  box-shadow: 0 10px 24px rgba(47,122,85,.22), inset 0 1px 0 rgba(255,255,255,.28);
+}
+html[data-theme="light"] .btn--primary:hover {
+  color: #fff; background: linear-gradient(135deg, #43976c, #357f59);
+}
+html[data-theme="light"] .btn--ghost { background: transparent; }
+
+/* ---- form controls ---- */
+html[data-theme="light"] input:not([type=range]),
+html[data-theme="light"] select,
+html[data-theme="light"] textarea {
+  border-color: var(--line); color: var(--text); background: #fbfbfc;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder { color: #9aa0a8; }
+html[data-theme="light"] input:focus,
+html[data-theme="light"] select:focus,
+html[data-theme="light"] textarea:focus,
+html[data-theme="light"] button:focus-visible {
+  border-color: var(--safe); box-shadow: 0 0 0 3px rgba(47,122,85,.16);
+}
+html[data-theme="light"] .seg { border-color: var(--line); background: rgba(16,17,20,.04); }
+html[data-theme="light"] .seg button { color: var(--muted); }
+html[data-theme="light"] .seg button[aria-pressed="true"] {
+  color: var(--text); background: #fff; box-shadow: 0 3px 10px rgba(16,17,20,.1);
+}
+
+/* ---- map chrome ---- */
+html[data-theme="light"] .map-wrap {
+  border-color: var(--line); background: #e3e7e4;
+  box-shadow: 0 18px 45px rgba(16,17,20,.1);
+}
+html[data-theme="light"] #map,
+html[data-theme="light"] #map2,
+html[data-theme="light"] #map3,
+html[data-theme="light"] #map4,
+html[data-theme="light"] .nav__map {
+  background-color: #e9ecea;
+  background-image:
+    linear-gradient(rgba(47,122,85,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(47,122,85,.10) 1px, transparent 1px),
+    radial-gradient(circle at 54% 42%, rgba(47,122,85,.16), transparent 2px),
+    linear-gradient(32deg, transparent 47%, rgba(60,90,134,.18) 48%, rgba(60,90,134,.18) 49%, transparent 50%),
+    linear-gradient(118deg, transparent 48%, rgba(138,100,20,.18) 49%, rgba(138,100,20,.18) 50%, transparent 51%);
+}
+html[data-theme="light"] .map-search input,
+html[data-theme="light"] .map-overlay .btn,
+html[data-theme="light"] .status-pill,
+html[data-theme="light"] .legend {
+  border-color: var(--line); color: var(--text); background: rgba(255,255,255,.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .legend { color: var(--muted); }
+
+/* ---- lists and stats ---- */
+html[data-theme="light"] .route-card,
+html[data-theme="light"] .stat {
+  border-color: var(--line); background: rgba(255,255,255,.82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .route-card:hover {
+  border-color: rgba(47,122,85,.42); background: rgba(255,255,255,.96);
+}
+html[data-theme="light"] .feed li,
+html[data-theme="light"] .hotspot-list li { border-bottom-color: var(--line); }
+
+/* ---- hero ---- */
+html[data-theme="light"] .hero {
+  background:
+    radial-gradient(circle at 76% 40%, rgba(47,122,85,.10), transparent 27rem),
+    linear-gradient(135deg, #f4f5f7, #e9ecef 65%, #f0f2f4);
+}
+html[data-theme="light"] .hero:before {
+  opacity: .5;
+  background-image:
+    linear-gradient(rgba(16,17,20,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,17,20,.06) 1px, transparent 1px);
+}
+html[data-theme="light"] .hero__title span:nth-child(2) { color: var(--safe); }
+html[data-theme="light"] .hero__eyebrow,
+html[data-theme="light"] .hero__trust,
+html[data-theme="light"] .hero__lead { color: var(--muted); }
+html[data-theme="light"] .hero__eyebrowDot {
+  background: var(--safe); box-shadow: 0 0 0 5px rgba(47,122,85,.12);
+}
+html[data-theme="light"] .hero__actions .btn--primary { color: #fff; background: linear-gradient(135deg, #3a8a61, #2f7a55); }
+html[data-theme="light"] .hero__actions .btn--primary:hover { background: #357f59; }
+html[data-theme="light"] .hero__actions .btn {
+  color: var(--text); border-color: var(--line-strong); background: rgba(255,255,255,.7);
+}
+html[data-theme="light"] .hero__map {
+  border-color: var(--line);
+  background: linear-gradient(145deg, rgba(255,255,255,.86), rgba(233,236,240,.9));
+  box-shadow: 0 24px 60px rgba(16,17,20,.12), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .hero__map:before {
+  background-image:
+    linear-gradient(rgba(16,17,20,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,17,20,.07) 1px, transparent 1px);
+}
+html[data-theme="light"] .hero__routeLine { border-color: var(--safe); border-left-color: transparent; border-bottom-color: transparent; }
+html[data-theme="light"] .hero__marker {
+  color: #fff; background: #2f7a55; border-color: #f4f5f7;
+  box-shadow: 0 6px 18px rgba(16,17,20,.2);
+}
+html[data-theme="light"] .hero__marker--end { color: #f4f5f7; background: #565b63; }
+html[data-theme="light"] .hero-card {
+  border-color: var(--line); background: rgba(255,255,255,.9);
+  box-shadow: 0 18px 40px rgba(16,17,20,.1), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .hero-card__icon { color: #fff; background: #2f7a55; }
+html[data-theme="light"] .hero-card__pulse { background: var(--safe); box-shadow: 0 0 0 5px rgba(47,122,85,.12); }
+html[data-theme="light"] .hero-card strong { color: var(--text); }
+html[data-theme="light"] .hero__scroll { color: var(--muted); }
+html[data-theme="light"] .hero__scroll span { background: var(--safe); }
+
+/* ---- custom select ---- */
+html[data-theme="light"] .custom-select__trigger {
+  border-color: var(--line-strong); color: var(--text); background: #fbfbfc;
+}
+html[data-theme="light"] .custom-select__trigger:hover { border-color: rgba(47,122,85,.5); background: #f2f5f3; }
+html[data-theme="light"] .custom-select__trigger:focus-visible { border-color: var(--safe); box-shadow: 0 0 0 3px rgba(47,122,85,.16); }
+html[data-theme="light"] .custom-select__menu {
+  border-color: var(--line-strong); background: rgba(255,255,255,.99);
+  box-shadow: 0 18px 35px rgba(16,17,20,.14), 0 2px 6px rgba(16,17,20,.07);
+}
+html[data-theme="light"] .custom-select__option { color: var(--text); }
+html[data-theme="light"] .custom-select__option:hover,
+html[data-theme="light"] .custom-select__option:focus-visible { color: var(--text); background: rgba(47,122,85,.1); }
+html[data-theme="light"] .custom-select__option[aria-selected="true"] { color: var(--text); background: rgba(47,122,85,.16); }
+html[data-theme="light"] .custom-select__option[aria-selected="true"]::after { color: var(--safe); }
+
+/* ---- sheets, navigation overlay, notices, install bars ---- */
+html[data-theme="light"] .sheet { background: rgba(16,17,20,.28); }
+html[data-theme="light"] .sheet__panel,
+html[data-theme="light"] .nav__banner,
+html[data-theme="light"] .nav__bottom,
+html[data-theme="light"] .nav__ctrl {
+  border-color: var(--line); background: rgba(255,255,255,.9);
+  box-shadow: 0 24px 70px rgba(16,17,20,.16), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .sheet__body { color: var(--muted); }
+html[data-theme="light"] .nav { background: #e9ecea; }
+html[data-theme="light"] .nav__ctrl { color: var(--text); }
+html[data-theme="light"] .nav__statKey,
+html[data-theme="light"] .nav__safetyLabel,
+html[data-theme="light"] .nav__safetyNote { color: var(--muted); }
+html[data-theme="light"] .nav__safetyVal { color: var(--safe); }
+html[data-theme="light"] .installbar {
+  border-color: var(--line); background: rgba(255,255,255,.94); color: var(--text);
+  box-shadow: 0 24px 70px rgba(16,17,20,.16);
+}
+html[data-theme="light"] .authbar__menu,
+html[data-theme="light"] .authsheet {
+  border-color: var(--line); background: rgba(255,255,255,.98); color: var(--text);
+}
+html[data-theme="light"] .notice--ok { border-color: rgba(47,122,85,.34); background: rgba(47,122,85,.09); }
+html[data-theme="light"] .notice--warn { border-color: rgba(138,100,20,.38); background: rgba(138,100,20,.09); }
+html[data-theme="light"] .notice--err { border-color: rgba(168,64,58,.36); background: rgba(168,64,58,.09); }
+
+/* ---- the closing sections: repaint the two hard-coded dark surfaces ---- */
+html[data-theme="light"] .sp-mission {
+  border-color: var(--line);
+  background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(247,248,250,.9));
+  box-shadow: 0 18px 45px rgba(16,17,20,.09), inset 0 1px 0 rgba(255,255,255,.9);
+}
+html[data-theme="light"] .sp-mission .belief,
+html[data-theme="light"] .sp-mission .sp-block {
+  background: rgba(16,17,20,.03); border-color: var(--line);
+}
+html[data-theme="light"] .sp-mission .belief:hover,
+html[data-theme="light"] .sp-mission .sp-block:hover {
+  background: rgba(16,17,20,.055); border-color: var(--line-strong);
+}
+html[data-theme="light"] .sp-mission .belief__icon,
+html[data-theme="light"] .sp-mission .sp-block__icon {
+  background: rgba(47,122,85,.1); border-color: rgba(47,122,85,.3); color: var(--safe);
+}
+html[data-theme="light"] .sp-mission .note {
+  background: rgba(16,17,20,.035); border-color: var(--line);
+  border-left-color: var(--safe);
+}
+html[data-theme="light"] .sp-mission .sp-grid--limits .sp-block { border-left-color: var(--line-strong); }
+html[data-theme="light"] .sp-mission .sp-grid--limits .sp-block:first-child { border-left-color: rgba(138,100,20,.6); }
+
+/* ---- theme picker, on a light page ---- */
+html[data-theme="light"] .themepick {
+  --accent: #2f7a55;
+  border-color: var(--line); background: rgba(16,17,20,.04);
+}
+html[data-theme="light"] .themepick__opt:hover { background: rgba(16,17,20,.06); }
+html[data-theme="light"] .themepick__opt[aria-pressed="true"] { background: rgba(47,122,85,.14); }
+/* The split circle keeps its light half light, so give it a faint edge on white. */
+html[data-theme="light"] .themepick__icon .themepick__half { fill: #ffffff; }
+
+/* ---- mobile hero background ---- */
+@media (max-width: 900px) {
+  html[data-theme="light"] .tabs { background: rgba(244,245,247,.86); }
+  html[data-theme="light"] .hero {
+    background:
+      radial-gradient(circle at 70% 44%, rgba(47,122,85,.12), transparent 20rem),
+      linear-gradient(135deg, #eef1f0, #f4f5f7);
+  }
+}
+

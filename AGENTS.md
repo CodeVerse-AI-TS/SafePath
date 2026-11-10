@@ -301,3 +301,47 @@ SafePath works with no account. Everything below exists to keep it that way.
   requests. The intercepted responses must send `Access-Control-Allow-Origin`,
   or the browser blocks the cross-origin module import and every auth test
   fails for the wrong reason.
+
+## Theming
+
+- **The site is charcoal `#101114`, not forest green.** The `--bg`/`--panel`
+  variables in the stylesheet's first layer, and a few comments mentioning a
+  dark forest, are stale. The stylesheet stacks abandoned themes (forest green →
+  plum → charcoal) and only the last block wins. Measure the rendered pixel
+  colour before "restoring" a theme from a comment.
+- **`public/theme.js` is the single owner of the theme.** An inline script in
+  `<head>` only *reads* the saved preference and sets `data-theme` /
+  `data-theme-choice` before first paint, to avoid a flash of the wrong theme.
+  `theme.js` performs the switching. Keep both in step.
+- **A first-time visitor gets the dark theme.** `DEFAULT_CHOICE` is `dark`, not
+  `system`. "System" is an explicit choice. Defaulting to `system` makes the
+  site render light for anyone whose OS is light, which changes the product's
+  appearance for existing visitors and fails the visual suites.
+- **The light theme is an override layer keyed on `html[data-theme="light"]`.**
+  It must out-specify the stacked dark blocks, so every rule repeats the
+  `html[data-theme="light"]` ancestor rather than relying on source order.
+- **The theme picker must not change the top bar's height.** The top bar is
+  `height:76px` below 900px and `92px` above. If the picker adds a wrapped row,
+  the sticky tab strip is pushed out of alignment and clicks land on the wrong
+  element. Below 520px the picker becomes three bare 34px icons (labels are
+  visually hidden but remain the accessible name) and `.topbar__spacer` is
+  hidden, which keeps the bar at its documented height from 320px up.
+- **Only write `data-theme` when the value changes.** `theme.js` sets these
+  attributes on `<html>`, and the light layer is keyed off them, so a redundant
+  write at load invalidates style for the whole document and can disturb the
+  entry animation.
+
+## Testing notes
+
+- **`main` has `animation:fadeUp .5s`, and a tab click only flips `hidden`.**
+  Clicking or measuring on a fixed `wait(500)` races that animation and can hit
+  a 0x0 element ("Node is either not clickable or not an Element"). Worse, a
+  route search from a previous step resolves asynchronously and can switch tabs
+  back after the test has already seen Overview. `test/autocomplete.smoke.js`
+  uses a `showOverview()` helper that clicks and then requires the Overview page
+  to stay visible for a sustained window before proceeding.
+- **Run `npm run test:all`, not the suites against your dev server.** The runner
+  starts its own server on a spare port and raises the report rate limit. A
+  second server left running on the runner's port makes suites flake in ways
+  that look like product bugs. Check for stray `node server/index.js` processes
+  before investigating a failure.
