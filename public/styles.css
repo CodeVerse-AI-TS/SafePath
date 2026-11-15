@@ -1531,3 +1531,34 @@ html[data-theme="light"] .themetoggle:hover { background: rgba(16,17,20,.06); }
   }
 }
 
+/* ===== HERO ROUTE PREVIEW VIDEO =========================================
+   A looping clip fills the "MYSURU / ROUTE PREVIEW" panel, replacing the
+   decorative grid and route illustration. The panel keeps its size, border
+   and rounded corners; the video is clipped by them. The three floating
+   cards sit above the video at z-index 4.
+
+   z-index inside .hero__map: video 0, dark scrim 1, label 2, fallback
+   illustration 3. The label used to be 2, so the scrim is pushed to 1 to
+   stay underneath it.
+
+   The clip has an opaque background, so the overlay is only there to steady
+   the contrast behind the cards — it is not a theme tint. It therefore does
+   not need a light-theme variant, and the original grid still shows through
+   at full strength whenever the fallback is in use. */
+.sp-hero-video { position: absolute; inset: 0; z-index: 0; }
+.sp-hero-video__media { display: block; width: 100%; height: 100%; object-fit: cover; background: #0b1f19; }
+/* Flat 35% wash, plus a deeper band across the top where the label sits. The
+   label is pale green and only 10px, and a bright frame of the clip drops it
+   to about 1.8:1 against a flat wash; the gradient puts it back above 4.5:1
+   whatever the video is showing. */
+.sp-hero-video__scrim {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 84px),
+    rgba(0, 0, 0, .35);
+}
+/* The original illustration, kept in the DOM but hidden. The script unhides it
+   when the clip cannot play or the visitor asked for reduced motion. */
+.sp-hero-video__fallback { position: absolute; inset: 0; z-index: 3; }
+.sp-hero-video__fallback[hidden] { display: none; }
+
