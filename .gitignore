@@ -37,3 +37,7 @@ node_modules/
 web/dist/
 web/node_modules/
 web/.vite/
+
+# Video artifacts
+*.mp4
+!public/safepath-hero.mp4
