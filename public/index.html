@@ -138,12 +138,21 @@
         <div class="hero__visual" aria-label="Illustration of a safer route through Mysuru">
           <div class="hero__ambient"></div>
           <div class="hero__map" aria-hidden="true">
-            <div class="hero__mapLabel">MYSURU / LIVE ROUTE VIEW</div>
-            <div class="hero__road hero__road--one"></div>
-            <div class="hero__road hero__road--two"></div>
-            <div class="hero__routeLine"></div>
-            <span class="hero__marker hero__marker--start">A</span>
-            <span class="hero__marker hero__marker--end">B</span>
+            <div class="hero__mapLabel">MYSURU / ROUTE PREVIEW</div>
+            <div class="sp-hero-video" id="heroVideo">
+              <video class="sp-hero-video__media" autoplay muted loop playsinline preload="metadata"
+                     poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9'%3E%3Crect width='16' height='9' fill='%230b1f19'/%3E%3C/svg%3E">
+                <source src="safepath-hero.mp4" type="video/mp4">
+              </video>
+              <div class="sp-hero-video__scrim"></div>
+            </div>
+            <div class="sp-hero-video__fallback">
+              <div class="hero__road hero__road--one"></div>
+              <div class="hero__road hero__road--two"></div>
+              <div class="hero__routeLine"></div>
+              <span class="hero__marker hero__marker--start">A</span>
+              <span class="hero__marker hero__marker--end">B</span>
+            </div>
           </div>
           <div class="hero-card hero-card--route"><span class="hero-card__icon">↗</span><span><b>Safest route</b><small>Low reported risk · 24 min</small></span><strong>01</strong></div>
           <div class="hero-card hero-card--alert"><span class="hero-card__pulse"></span><span><b>Nearby alert</b><small>Community signal · 110 m</small></span></div>
@@ -981,5 +990,89 @@
   </div>
   <button class="btn btn--primary btn--sm" id="updateReload" type="button">Reload</button>
 </div>
+
+<!-- ===== HERO ROUTE PREVIEW VIDEO =====
+     Fills the hero panel with a looping clip. Falls back to the original grid
+     illustration when the clip cannot play or reduced motion is requested, and
+     pauses itself while the panel is off screen. -->
+<script>
+(function () {
+  var wrap = document.getElementById('heroVideo');
+  if (!wrap) return;
+  var video = wrap.querySelector('video');
+  var fallback = document.querySelector('.sp-hero-video__fallback');
+  if (!video) return;
+
+  var settled = false;
+
+  // The illustration markup ships hidden; this is the switch that brings it
+  // back, and the flag that stops the video from ever starting.
+  function showFallback() {
+    if (settled) return;
+    settled = true;
+    video.pause();
+    wrap.hidden = true;
+    if (fallback) fallback.hidden = false;
+  }
+  function showVideo() {
+    if (settled) return;
+    settled = true;
+    wrap.hidden = false;
+    if (fallback) fallback.hidden = true;
+  }
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var wantPlay = !reduceMotion;
+
+  if (reduceMotion) {
+    video.removeAttribute('autoplay');
+    video.pause();
+    showFallback();
+    return;
+  }
+
+  // Missing, unreadable or unsupported clip: put the grid back.
+  video.addEventListener('error', showFallback);
+  var source = video.querySelector('source');
+  if (source) source.addEventListener('error', showFallback);
+
+  function tryPlay() {
+    if (!video.paused) return;   // already running; nothing to do
+    var p = video.play();
+    if (p && p.catch) p.catch(function () {});   // autoplay refused: leave it paused
+  }
+
+  // Reveal the clip once it has a frame to paint, and swap the illustration out
+  // in the same tick so the panel is never briefly empty.
+  video.addEventListener('loadeddata', function () {
+    if (video.videoWidth) showVideo();
+  });
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting && wantPlay) tryPlay();
+      else video.pause();
+    }, { threshold: 0.2 }).observe(wrap);
+  }
+
+  // This script runs at the end of the body, so a clip that fails immediately
+  // (404, blocked request) has already fired its error event by now — the
+  // listener above never sees it. Read the current state instead of waiting.
+  function assess() {
+    if (settled) return;
+    if (video.error) return showFallback();                        // decode or network error
+    if (video.networkState === video.NETWORK_NO_SOURCE) return showFallback();
+    if (video.readyState >= 2 && video.videoWidth) return showVideo();
+    // Still fetching: give it a moment, then judge by whether a frame arrived.
+    setTimeout(function () {
+      if (settled) return;
+      if (video.readyState >= 2 && video.videoWidth) showVideo();
+      else showFallback();
+    }, 2500);
+  }
+  if (document.readyState === 'complete') assess();
+  else window.addEventListener('load', assess);
+})();
+</script>
 </body>
 </html>
