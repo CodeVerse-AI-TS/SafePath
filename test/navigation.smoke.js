@@ -533,13 +533,14 @@ const hidden = (page, sel) => page.evaluate((s) => {
     const stack = document.getElementById('navControls');
     const mode = stack.dataset.overflow;
     const ids = mode === 'more'
-      ? ['navMoreBtn', 'navPanicBtn']
-      : ['navNorthBtn', 'navRecenterBtn', 'navVoiceBtn', 'navPanicBtn'];
+      ? ['navMoreBtn']
+      : ['navNorthBtn', 'navRecenterBtn', 'navVoiceBtn'];
     const ctrls = ids.map(measure).filter(Boolean);
     const panel = document.getElementById('navBottom').getBoundingClientRect();
     const banner = document.getElementById('navBanner').getBoundingClientRect();
     const end = document.getElementById('navEndBtn').getBoundingClientRect();
     const stackBox = stack.getBoundingClientRect();
+    const sosRect = document.getElementById('navPanicBtn').getBoundingClientRect();
     const hit = (a, z) => !(a.right <= z.x || z.right <= a.x || a.bottom <= z.y || z.bottom <= a.y);
 
     const overlaps = [];
@@ -552,6 +553,9 @@ const hidden = (page, sel) => page.evaluate((s) => {
       { n: 'panel', x: panel.x, y: panel.y, right: panel.right, bottom: panel.bottom },
       { n: 'banner', x: banner.x, y: banner.y, right: banner.right, bottom: banner.bottom },
       { n: 'end', x: end.x, y: end.y, right: end.right, bottom: end.bottom },
+      // The SOS button is its own layer now, so it is checked against the map
+      // controls and the panel rather than counted as one of them.
+      { n: 'sos', x: sosRect.x, y: sosRect.y, right: sosRect.right, bottom: sosRect.bottom },
     ];
     for (const c of ctrls) for (const o of others) if (hit(c, o)) overlaps.push(c.id + '~' + o.n);
 
@@ -582,6 +586,15 @@ const hidden = (page, sel) => page.evaluate((s) => {
         : Math.round(stackBox.x - panel.right),
       sosInside: inside(word, sos) && inside(hint, sos),
       sosSize: Math.round(sos.width) + 'x' + Math.round(sos.height),
+      // The SOS button is pinned bottom-right, above the panel and away from the
+      // screen edge, and must never cover the panel or the instruction banner.
+      sosOverPanel: hit(sos, { x: panel.x, y: panel.y, right: panel.right, bottom: panel.bottom }),
+      sosOverBanner: hit(sos, { x: banner.x, y: banner.y, right: banner.right, bottom: banner.bottom }),
+      sosEdge: Math.round(window.innerWidth - sos.right),
+      sosTap: (() => {
+        const el = document.elementFromPoint((sos.x + sos.right) / 2, (sos.y + sos.bottom) / 2);
+        return !!(el && el.closest('#navPanicBtn'));
+      })(),
       hOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
     };
   });
@@ -590,12 +603,17 @@ const hidden = (page, sel) => page.evaluate((s) => {
   check('no control overlaps another control or the panel/banner',
     layout.overlaps.length === 0, layout.overlaps.join(', '));
   check('the stack keeps at least 8px between controls',
-    layout.minGap !== null && layout.minGap >= 8, layout.minGap + 'px');
+    layout.count < 2 || (layout.minGap !== null && layout.minGap >= 8), layout.minGap + 'px');
   check('the stack is clear of the bottom panel', layout.separation >= 0,
     layout.separation + 'px (' + layout.mode + ' mode)');
   check('every control is at least 44px to tap',
     layout.tooSmall.length === 0, layout.tooSmall.join(', ') || 'all large enough');
   check('the SOS label stays inside its circle', layout.sosInside, layout.sosSize);
+  check('the SOS button never covers the bottom panel or the banner',
+    !layout.sosOverPanel && !layout.sosOverBanner,
+    (layout.sosOverPanel ? 'over panel; ' : '') + (layout.sosOverBanner ? 'over banner' : 'clear'));
+  check('the SOS button keeps at least 16px from the screen edge', layout.sosEdge >= 16, layout.sosEdge + 'px');
+  check('the SOS button receives its own tap', layout.sosTap);
   check('the control stack does not cause horizontal overflow', !layout.hOverflow);
 
   // --- 23. the same holds across the common phone and tablet widths ---
@@ -619,11 +637,13 @@ const hidden = (page, sel) => page.evaluate((s) => {
       const stack = document.getElementById('navControls');
       const mode = stack.dataset.overflow;
       const ids = mode === 'more'
-        ? ['navMoreBtn', 'navPanicBtn']
-        : ['navNorthBtn', 'navRecenterBtn', 'navVoiceBtn', 'navPanicBtn'];
+        ? ['navMoreBtn']
+        : ['navNorthBtn', 'navRecenterBtn', 'navVoiceBtn'];
       const ctrls = ids.map(measure).filter(Boolean);
       const panel = document.getElementById('navBottom').getBoundingClientRect();
+      const banner = document.getElementById('navBanner').getBoundingClientRect();
       const stackBox = stack.getBoundingClientRect();
+      const sos = measure('navPanicBtn');
       const hit = (a, z) => !(a.right <= z.x || z.right <= a.x || a.bottom <= z.y || z.bottom <= a.y);
       const problems = [];
       for (let i = 0; i < ctrls.length; i++) {
@@ -636,18 +656,80 @@ const hidden = (page, sel) => page.evaluate((s) => {
         if (!el || !el.closest('#' + c.id)) problems.push('covered ' + c.id);
         if (c.w < 44 || c.h < 44) problems.push('small ' + c.id);
       }
+      // The SOS button, its own layer, must stay clear of the panel and banner,
+      // off the screen edge, and tappable at its centre.
+      if (!sos) problems.push('no SOS button');
+      else {
+        if (hit(sos, { x: panel.x, y: panel.y, right: panel.right, bottom: panel.bottom })) problems.push('SOS over panel');
+        if (hit(sos, { x: banner.x, y: banner.y, right: banner.right, bottom: banner.bottom })) problems.push('SOS over banner');
+        if (window.innerWidth - sos.right < 16) problems.push('SOS near edge');
+        if (sos.y < 0 || sos.bottom > window.innerHeight) problems.push('SOS off screen');
+        const el = document.elementFromPoint((sos.x + sos.right) / 2, (sos.y + sos.bottom) / 2);
+        if (!el || !el.closest('#navPanicBtn')) problems.push('SOS covered');
+      }
       const sep = mode === 'stack' ? panel.y - stackBox.bottom : stackBox.x - panel.right;
       if (sep < 0) problems.push('behind panel');
       if (document.documentElement.scrollWidth > window.innerWidth + 1) problems.push('overflow');
       return { mode, count: ctrls.length, problems };
     });
     if (r.problems.length) layoutFails.push(v.w + 'x' + v.h + ': ' + r.problems.join('; '));
-    if (r.count < 2) layoutFails.push(v.w + 'x' + v.h + ': only ' + r.count + ' control(s)');
+    if (r.count < 1) layoutFails.push(v.w + 'x' + v.h + ': no controls');
   }
   check('no layout problems at 320/360/375/414/768/812 widths',
     layoutFails.length === 0, layoutFails.join(' | '));
   await page.setViewport({ width: 1440, height: 1000 });
   await wait(400);
+
+  // --- 24. the SOS hold: a tap does nothing, releasing early cancels, and a
+  //         full hold sends exactly one alert. Pointer events are driven so the
+  //         real handler runs, not a synthesised call.
+  const sosState = () => page.evaluate(() => {
+    const btn = document.getElementById('navPanicBtn');
+    return {
+      label: document.getElementById('navPanicLabel').textContent,
+      holding: btn.classList.contains('holding'),
+      sent: btn.classList.contains('is-sent'),
+      aria: btn.getAttribute('aria-label'),
+      result: document.getElementById('navPanicResult').textContent,
+    };
+  });
+  const sosCentre = () => page.evaluate(() => {
+    const r = document.getElementById('navPanicBtn').getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  const press = async (ms) => {
+    const c = await sosCentre();
+    await page.mouse.move(c.x, c.y);
+    await page.mouse.down();
+    await wait(ms);
+    await page.mouse.up();
+  };
+
+  // No GPS fix is present here, so a completed hold reports "no location yet"
+  // and schedules a retry instead of inventing a position.
+  await press(80);
+  await wait(400);
+  let sos = await sosState();
+  check('a quick tap on SOS does not send an alert', !sos.sent && !sos.holding, sos.label);
+  check('the SOS button is labelled for screen readers',
+    sos.aria === 'Send emergency alert, hold to confirm', sos.aria);
+
+  await press(600);
+  await wait(1200);
+  sos = await sosState();
+  check('releasing SOS halfway cancels without sending', !sos.sent && !sos.holding, sos.label);
+
+  // This trip has had a location handed over during the run, so a completed
+  // hold sends an alert and shows the confirmation for a few seconds.
+  await press(1700);
+  await wait(300);
+  sos = await sosState();
+  check('holding SOS for the full time sends an alert',
+    sos.sent && /alert sent|demo alert/i.test(sos.label + ' ' + sos.result),
+    sos.label + ' / ' + sos.result);
+  await wait(4200);
+  sos = await sosState();
+  check('the SOS confirmation clears after a few seconds', !sos.sent, sos.label);
 
   // clean up: leave the app on the planner
   await page.evaluate(() => window.SafePathNav.endTrip('aborted'));

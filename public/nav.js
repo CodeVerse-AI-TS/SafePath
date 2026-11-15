@@ -48,17 +48,18 @@
   const $ = (id) => document.getElementById(id);
 
   /**
-   * Keep the control stack clear of the bottom panel.
+   * Keep the control stack clear of the bottom panel and of the SOS button.
    *
    * The panel's height is not a constant: it changes with the compass, the End
    * route button wrapping, the GPS line, and the browser chrome hiding. Rather
    * than guess a number, publish the measured height as --nav-panel-h and let
-   * the CSS place the stack above it. A ResizeObserver catches every change, so
-   * the controls can never drift behind the panel.
+   * the CSS place the stack above it. The SOS button sits below the stack, so
+   * the stack is measured against the SOS button's top edge instead of the
+   * panel's. A ResizeObserver catches every change, so the controls can never
+   * drift behind the panel or onto the button.
    *
-   * On a screen too short for the stack (landscape phones), the three map
-   * controls collapse into one "More" button that opens a sheet, so SOS always
-   * has room and stays reachable.
+   * On a screen too short for the stack, the three map controls collapse into
+   * one "More" button that opens a sheet.
    */
   const controls = { ro: null, panel: null, queued: false };
 
@@ -71,9 +72,24 @@
     if (more) more.hidden = true;
     if (compact) compact.hidden = false;
 
+    const sos = $('navSos');
     const panel = $('navBottom');
     const panelTop = panel ? panel.getBoundingClientRect().top : window.innerHeight;
-    const room = panelTop - stack.getBoundingClientRect().height - 24;
+    // In portrait the stack sits above the SOS button, which sits above the
+    // panel, so the SOS top is the binding limit. In short landscape the panel
+    // is tall and the stack shares a gutter beside it, so the panel top binds
+    // instead. Taking the tighter of the two covers both.
+    const limitTop = sos
+      ? Math.min(sos.getBoundingClientRect().top - 12, panelTop - 24)
+      : panelTop - 24;
+    // Measure the natural height. max-height would clamp the box while the flex
+    // children still overflow it, under-reporting the height and leaving the
+    // stack uncollapsed.
+    const prevMax = stack.style.maxHeight;
+    stack.style.maxHeight = 'none';
+    const natural = stack.getBoundingClientRect().height;
+    stack.style.maxHeight = prevMax;
+    const room = limitTop - natural;
     const overflow = room < 0;
 
     if (more) more.hidden = !overflow;
@@ -111,12 +127,21 @@
     const apply = () => {
       const h = Math.round(panel.getBoundingClientRect().height);
       if (h > 0) document.documentElement.style.setProperty('--nav-panel-h', h + 'px');
+      // The SOS button grows a result line under it, so its height is measured
+      // rather than assumed: the band the stack has to clear is built from it.
+      const sos = $('navSos');
+      if (sos) {
+        const sh = Math.ceil(sos.getBoundingClientRect().height);
+        if (sh > 0) document.documentElement.style.setProperty('--nav-sos-h', sh + 'px');
+      }
       queueSyncControlOverflow();
     };
     apply();
     if (typeof ResizeObserver === 'function') {
       controls.ro = new ResizeObserver(apply);
       controls.ro.observe(panel);
+      const sos = $('navSos');
+      if (sos) controls.ro.observe(sos);
     }
     window.addEventListener('resize', apply);
     window.addEventListener('orientationchange', apply);
@@ -1098,62 +1123,139 @@
     const ring = $('navPanicRing');
     const label = $('navPanicLabel');
     if (!btn) return;
-    const HOLD_MS = 2000;
+    const HOLD_MS = 1500;
     const CIRC = 2 * Math.PI * 48;
-    let timer = null, start = 0, raf = null;
+    const IDLE_LABEL = 'Hold';
+    let timer = null, start = 0, raf = null, sentTimer = null, fixRetry = null;
+    let lastTapAt = 0;        // when the last *quick* press happened
+    let sentShowing = false;  // the "Alert sent" confirmation is on screen
 
-    // Haptics: a tick as the hold begins, a stronger pattern when it fires.
-    // Not every browser or device supports it, so it is best-effort only.
+    // Haptics: a tick as the hold begins, a short pulse when it fires. Not every
+    // browser or device supports it, so it is best-effort only. Deliberately
+    // quiet: no sound and no flashing, which could tip off someone nearby.
     const buzz = (pattern) => {
       try { if (navigator.vibrate) navigator.vibrate(pattern); } catch { /* unsupported */ }
     };
 
+    const setLabel = (text) => { if (label) label.textContent = text; };
+    const setRing = (t) => {
+      if (ring) ring.setAttribute('stroke-dashoffset', String(CIRC * (1 - t)));
+    };
+
     const reset = () => {
+      // Never wipe the confirmation: a pointerleave while it is showing (the
+      // cursor drifting off the button) must not cancel a hold that succeeded.
+      if (sentShowing) return;
       clearTimeout(timer); timer = null;
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf); raf = null;
       btn.classList.remove('holding');
-      if (ring) ring.setAttribute('stroke-dashoffset', String(CIRC));
-      if (label) label.textContent = 'Hold to alert';
+      setRing(0);
+      setLabel(IDLE_LABEL);
     };
     const tick = () => {
       const t = Math.min(1, (Date.now() - start) / HOLD_MS);
-      if (ring) ring.setAttribute('stroke-dashoffset', String(CIRC * (1 - t)));
+      setRing(t);
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     const begin = (e) => {
-      if (e && e.preventDefault) e.preventDefault();
+      // Ignore the second press of a double tap, so a mis-tap cannot start a
+      // hold. A genuine press after that window works normally.
+      const now = Date.now();
+      if (now - lastTapAt < 400) return;
+      if (e && e.cancelable) e.preventDefault();
       if (timer) return;
+      // A fresh press clears any lingering confirmation.
+      if (sentShowing) {
+        sentShowing = false;
+        clearTimeout(sentTimer);
+        btn.classList.remove('is-sent');
+      }
       start = Date.now();
       btn.classList.add('holding');
-      if (label) label.textContent = 'keep holding…';
-      buzz(20);
+      setLabel('Keep holding');
+      buzz(15);
       tick();
       timer = setTimeout(fire, HOLD_MS);
     };
-    const fire = async () => {
+    // Releasing before the timer fires cancels; a press shorter than a tap is
+    // remembered so the next press within the double-tap window is ignored.
+    const release = () => {
+      if (timer && Date.now() - start < 300) lastTapAt = Date.now();
       reset();
-      buzz([40, 60, 40]);
-      const here = state.lastAccepted || state.displayed || state.from;
+    };
+
+    /** Tell the user we cannot place them yet, and retry until a fix arrives. */
+    const waitForFix = () => {
+      const out = $('navPanicResult');
+      // The button's own line stays short; the full wording goes to the visible
+      // status line, which is also announced, so it cannot resize the button.
+      if (out) out.textContent = 'No GPS yet';
+      announce('No location yet, alert will send when GPS is ready');
+      if (fixRetry) return;
+      fixRetry = setInterval(async () => {
+        const here = state.lastAccepted || state.displayed;
+        if (!here) return;
+        clearInterval(fixRetry); fixRetry = null;
+        await fire(here);
+      }, 2000);
+    };
+
+    const showSent = (ok) => {
+      sentShowing = true;
+      btn.classList.toggle('is-sent', ok);
+      setLabel(ok ? 'Alert sent' : 'Try again');
+      clearTimeout(sentTimer);
+      sentTimer = setTimeout(() => {
+        sentShowing = false;
+        btn.classList.remove('is-sent');
+        setLabel(IDLE_LABEL);
+      }, ok ? 4000 : 2500);
+    };
+
+    const fire = async (known) => {
+      reset();
+      const here = known || state.lastAccepted || state.displayed;
+      // No fix yet: do not fail silently, and do not invent a position.
+      if (!here) { waitForFix(); return; }
       const out = $('navPanicResult');
       if (out) out.textContent = 'Sending your alert…';
       try {
         const res = await sendAlert(here.lat, here.lng, 'SafePath panic alert during navigation');
-        if (out) {
-          out.textContent = res.live
-            ? 'Alert sent to your trusted circle.'
-            : 'DEMO ALERT — recorded in this app, not sent to anyone. ' + (res.delivery || '');
-        }
+        buzz(30);
+        showSent(true);
+        // The visible line stays short so it cannot overflow its reserved space;
+        // the full wording goes to the status line, which screen readers read.
+        if (out) out.textContent = res.live ? 'Alert sent' : 'Demo alert only';
+        announce(res.live
+          ? 'Alert sent to your trusted circle.'
+          : 'DEMO ALERT — recorded in this app, not sent to anyone. ' + (res.delivery || ''));
       } catch (err) {
-        if (out) out.textContent = 'Could not send the alert: ' + err.message;
+        showSent(false);
+        if (out) out.textContent = 'Send failed';
+        announce('Could not send the alert: ' + err.message);
       }
     };
 
+    // Pointer covers mouse and touch. Keyboard: hold Space or Enter.
     btn.addEventListener('pointerdown', begin);
-    btn.addEventListener('pointerup', reset);
-    btn.addEventListener('pointerleave', reset);
-    btn.addEventListener('pointercancel', reset);
-    btn.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !timer) begin(e); });
-    btn.addEventListener('keyup', reset);
+    btn.addEventListener('pointerup', release);
+    btn.addEventListener('pointerleave', release);
+    btn.addEventListener('pointercancel', release);
+    // A long-press must not open the context menu on touch or on a trackpad.
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Swallow the click that follows a hold so it cannot act as a stray tap.
+    btn.addEventListener('click', (e) => { if (btn.classList.contains('is-sent')) e.preventDefault(); });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault(); // stop Space from scrolling the map
+      if (e.repeat) return; // holding the key must not restart the timer
+      begin(e);
+    });
+    btn.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') release();
+    });
+    // Losing focus (e.g. Tab away mid-hold) cancels, like releasing early.
+    btn.addEventListener('blur', reset);
   }
 
   /* ------------------------------ sharing ------------------------------- */

@@ -255,13 +255,18 @@ body.nav-active .app { display: none; }
 /* nav.js publishes the panel's measured height as --nav-panel-h, but not how
    far the panel sits from the bottom of the viewport, so the stack has to add
    that offset itself or it would tuck 12px behind the panel. */
-:root { --nav-panel-gap: 24px; }
+:root {
+  --nav-panel-gap: 24px;
+  --nav-sos-h: 130px;  /* measured height of the SOS block (button + status line) */
+  --nav-sos-gap: 16px; /* margin around SOS, and between it and the stack */
+  /* Everything the controls stack must clear below it: the SOS button. */
+  --nav-sos-band: calc(var(--nav-sos-gap) + var(--nav-sos-h) + var(--nav-sos-gap));
+}
 @media (max-width: 900px) { :root { --nav-panel-gap: 12px; } }
 
 .nav__controls {
-  right: calc(12px + env(safe-area-inset-right, 0px));
-  bottom: calc(var(--nav-panel-h, 240px) + var(--nav-panel-gap) + 12px + env(safe-area-inset-bottom, 0px));
-  max-height: var(--nav-stack-max-h, 60vh);
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--nav-panel-h, 240px) + var(--nav-panel-gap) + var(--nav-sos-band) + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
   z-index: 3;
 }
@@ -273,6 +278,10 @@ body.nav-active .app { display: none; }
 .nav:has(.nav__controls[data-overflow="more"]) .nav__bottom {
   right: calc(104px + env(safe-area-inset-right, 0px));
 }
+/* In "more" mode the stack lives in the gutter beside the panel, pinned low.
+   It must not ride above the SOS band: a tall panel would push it up into the
+   banner. The SOS sits above the panel and the stack beside it, so they cannot
+   meet. */
 .nav:has(.nav__controls[data-overflow="more"]) .nav__controls {
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
@@ -298,20 +307,57 @@ body.nav-active .app { display: none; }
 .nav__banner[hidden], .nav__alert[hidden],
 .nav__reroute[hidden], .nav__checkin[hidden] { display: none; }
 
-/* --- emergency button: last in the stack, so it is closest to the thumb --- */
-.nav__panic { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.panic__btn--sm { width: 76px; height: 76px; }
+/* --- emergency SOS: its own corner layer, bottom-right, above the panel --- */
+/* The stack and the SOS button are separate layers so the button can be larger
+   than the 48px controls without either covering the other. nav.js publishes
+   the SOS block's measured height as --nav-sos-h, which sizes the band the
+   stack has to clear below it. */
+.nav__sos {
+  position: absolute;
+  /* Width is pinned to the button so the result line, which is wider than the
+     button, cannot widen this box and push the button away from the corner. */
+  width: 76px;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--nav-panel-h, 240px) + var(--nav-panel-gap) + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 4;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+
+/* Solid, opaque, high-contrast. Never translucent: it has to stay readable and
+   urgent over any map colour, and must not read as a disabled control. */
+.panic__btn--sm {
+  width: 76px; height: 76px;
+  border: 2px solid #fff;
+  color: #fff;
+  background: #c8342c;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .38);
+}
+.panic__btn--sm:hover { transform: scale(1.02); background: #b32c25; }
 .panic__btn--sm .panic__ring { inset: -6px; }
 
-/* Its own grid so "SOS" and "Hold to alert" cannot spill out of the circle. */
+/* Its own grid so "SOS" and the hint cannot spill out of the circle. */
 .panic__face {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; width: 100%; padding: 0 6px; text-align: center; pointer-events: none;
+  gap: 1px; width: 100%; padding: 0 10px; text-align: center; pointer-events: none;
 }
 .panic__face[hidden] { display: none; }
-.panic__word { font: 700 16px/1 var(--display); letter-spacing: .01em; }
-.panic__hint { max-width: 62px; color: var(--danger); font: 500 10px/1.15 var(--sans); white-space: normal; }
-.panic__track { fill: none; stroke: rgba(209, 142, 142, .35); stroke-width: 4; }
+.panic__word { font: 800 22px/1 var(--display); letter-spacing: .02em; }
+/* One line, clipped rather than wrapped: the longest label the code can write
+   must never wrap onto a second line and spill past the round edge. */
+.panic__hint {
+  max-width: 100%; color: rgba(255, 255, 255, .9);
+  font: 600 10px/1.1 var(--sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* The progress ring rides the button edge. Selectors are qualified with
+   .panic__ring so they beat the base sheet's `.panic__ring circle` rule, which
+   would otherwise paint the ring in the pale pink danger colour. */
+.panic__ring .panic__track { fill: none; stroke: rgba(255, 255, 255, .32); stroke-width: 5; }
+.panic__ring .panic__progress { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; }
+
+/* A short, quiet confirmation. No sound and no flashing: a loud or bright
+   confirmation could tip off someone nearby. */
+.panic__btn--sm.is-sent { background: #1f7a4d; border-color: #fff; }
 
 /* --- compass --- */
 .nav__compass { position: relative; flex: 0 0 auto; width: 64px; height: 64px; }
@@ -343,7 +389,13 @@ body.nav-active .app { display: none; }
   color: inherit; background: transparent; border: 0; cursor: pointer; font-size: 15px;
 }
 .nav__rerouteRow { display: flex; gap: 8px; margin-top: 9px; }
-.nav__panicResult { margin-top: 8px; color: var(--muted); font-size: 11px; }
+.nav__panicResult {
+  /* Space is reserved up front. If this grew only when it had text, the flex
+     column would get taller, the button would shift up under the user's finger,
+     and that would fire a pointerleave — cancelling the hold it just completed. */
+  margin-top: 8px; max-width: 200px; min-height: 46px; text-align: center;
+  color: var(--muted); font-size: 11px;
+}
 
 /* End route / Share / Simulate: one tap target per row, never below 48px. */
 .nav__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
@@ -359,14 +411,20 @@ body.nav-active .app { display: none; }
    panel, so the panel keeps clear of a right-hand gutter and the stack lives in
    it instead. Icons only, to keep the gutter narrow. */
 @media (orientation: landscape) and (max-height: 620px) {
-  .nav__controls {
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    max-height: none;
-  }
   .nav__ctrl { width: 48px; padding: 0; border-radius: 12px; }
   .nav__ctrlText { display: none; }
-  .nav__bottom { right: calc(88px + env(safe-area-inset-right, 0px)); }
+  /* Wide enough for the 76px SOS plus its 16px margins. */
+  .nav__bottom { right: calc(108px + env(safe-area-inset-right, 0px)); }
   .nav__banner { padding: 8px 12px; }
+}
+
+/* Short landscape: the panel is tall (the compass plus the action row), so
+   there is no room to stack the SOS above it. It moves into the gutter beside
+   the panel, under the map controls, which keeps it clear of both. */
+@media (orientation: landscape) and (max-height: 620px) {
+  .nav__sos { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .nav:has(.nav__controls[data-overflow="more"]) .nav__controls,
+  .nav__controls { bottom: calc(16px + var(--nav-sos-h, 130px) + 12px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -375,11 +433,12 @@ body.nav-active .app { display: none; }
 
 /* --------------------------------------------------- misc app helpers */
 .is-active { border-color: var(--safe) !important; }
-.holding .panic__progress { transform: scaleX(1); transition: transform 2s linear; }
+/* The nav SOS ring draws its progress with stroke-dashoffset from nav.js. The
+   base sheet's scaleX transform is for a bar-style ring and would squash the
+   circle into an ellipse, so it is not used here. */
 
 @media (prefers-reduced-motion: reduce) {
   .route, .route:hover { transition: none; transform: none; }
-  .holding .panic__progress { transition: none; }
 }
 
 /* ==========================================================================

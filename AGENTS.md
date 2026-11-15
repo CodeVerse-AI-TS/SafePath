@@ -175,26 +175,37 @@ npm run import -- f.csv  # import real incidents from CSV
   cards and `buildHazards()` must both use it. They once differed (250 m on the
   card, 150 m in navigation), so a card could promise "1 hotspot near" and
   navigation then say nothing about it. Never hard-code a second radius.
-- **The map controls and the SOS button share one flex column.** `#navControls`
-  holds the orientation toggle, Recenter, Voice and SOS, in that order, and it is
-  the only positioned element; no control may set its own `top`/`right`/`bottom`.
-  Positioning them individually is what let SOS cover the third control. A test
-  asserts no control overlaps another or the panel at six viewport widths.
-- **The stack's bottom offset comes from the measured panel height.** `nav.js`
-  publishes `--nav-panel-h` from a `ResizeObserver` on `#navBottom`, because the
-  panel changes height with the compass, the End route button and the GPS line.
-  Do not replace this with a hard-coded offset.
+- **The map controls stack and the SOS button are separate layers.** `#navControls`
+  holds only the orientation toggle, Recenter and Voice; `#navSos` is its own
+  absolutely-positioned layer pinned bottom-right above the panel. They were one
+  flex column once, which squeezed the SOS against the edge and made it easy to
+  mis-tap; keeping SOS out of the column lets it be larger (76px) than the 48px
+  controls without either covering the other. A test asserts neither overlaps the
+  other, the panel or the banner at seven viewport widths.
+- **The stack's bottom offset comes from measured heights.** `nav.js` publishes
+  `--nav-panel-h` (the panel, via a `ResizeObserver`) and `--nav-sos-h` (the SOS
+  block, which grows a status line) from real measurements, and the stack clears
+  the band between them. Do not replace either with a hard-coded offset. Measure
+  the stack's *natural* height when deciding whether to collapse: a `max-height`
+  clamps the box while the flex children still overflow it, so the clamped height
+  under-reports and the stack never collapses.
 - **Short landscape screens collapse the controls into a "More" sheet.** When the
-  stack cannot fit above the panel, `syncControlOverflow()` swaps the three map
-  controls for one `#navMoreBtn` and keeps SOS. In that mode the panel is inset
-  by a right-hand gutter (`@media (orientation: landscape) and (max-height: 620px)`)
-  and the stack sits beside it, not above it — so a vertical clearance check does
-  not apply there.
+  stack cannot fit, `syncControlOverflow()` swaps the three map controls for one
+  `#navMoreBtn`. In that mode the panel is inset by a right-hand gutter and the
+  stack sits pinned low beside it (not above the SOS band, which would push it
+  into the banner). The SOS moves into that gutter too, above the panel.
+- **The SOS status line lives inside the button's own column, so its height is
+  reserved.** It must not change the block's size when text appears, or the button
+  shifts under the user's finger and fires a `pointerleave` mid-confirmation. Its
+  text is short by design; the full wording goes to `#navGps` via `announce()`.
 - **Live-navigation layering uses the `--z-*` tokens.** map < panel < banner <
   controls < modal. Do not add ad-hoc large z-index values to nav elements.
-- **SOS stays protected against accidental taps.** It is a 2-second hold with a
-  progress ring and `navigator.vibrate` haptics, and it keeps its `#navPanicHelp`
-  description. Keep the hold — a single tap must never send an alert.
+- **SOS is a 1.5-second hold with a progress ring and `navigator.vibrate`.** A
+  single tap or a double tap must never send an alert; releasing early cancels;
+  Space/Enter held does the same as a pointer hold. With no fix yet it says so and
+  retries when GPS arrives, rather than sending a guessed position. Keep the hold
+  and the `#navPanicHelp` description and the
+  `aria-label="Send emergency alert, hold to confirm"`.
 - **Navigation never touches location before Start.** A test asserts the planner
   makes zero geolocation calls, and that the watcher is released on arrival and on
   end. Do not add an eager `getCurrentPosition()`.

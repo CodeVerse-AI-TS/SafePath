@@ -509,8 +509,7 @@
         </div>
       </div>
 
-      <!-- map controls + emergency button: ONE flex column, so nothing can
-           overlap. SOS is last (closest to the thumb) and sits in normal flow. -->
+      <!-- map controls: ONE flex column, so nothing can overlap. -->
       <div class="nav__controls" id="navControls">
         <div class="nav__mapBtns">
           <button class="nav__ctrl" id="navNorthBtn" type="button" aria-pressed="false"
@@ -532,22 +531,26 @@
             <span class="nav__ctrlIcon" aria-hidden="true">⋯</span><span class="nav__ctrlText">More</span>
           </button>
         </div>
+      </div>
 
-        <div class="nav__panic">
-          <button class="panic__btn panic__btn--sm" id="navPanicBtn" type="button"
-                  aria-describedby="navPanicHelp" aria-label="Hold for two seconds to send an emergency alert">
-            <svg class="panic__ring" viewBox="0 0 100 100" aria-hidden="true">
-              <circle cx="50" cy="50" r="48" class="panic__track"></circle>
-              <circle cx="50" cy="50" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6" id="navPanicRing" class="panic__progress"></circle>
-            </svg>
-            <span class="panic__face" aria-hidden="true">
-              <span class="panic__word">SOS</span>
-              <span class="panic__hint" id="navPanicLabel">Hold to alert</span>
-            </span>
-          </button>
-          <p id="navPanicHelp" class="sr-only">Press and hold for two seconds. Your area-level location is sent to your trusted circle.</p>
-          <div class="nav__panicResult" id="navPanicResult" role="status" aria-live="assertive"></div>
-        </div>
+      <!-- Emergency SOS. Its own layer rather than a row in the control stack:
+           it is larger, solid, and pinned to the bottom-right corner above the
+           panel, so it is easy to find and hard to mis-tap. nav.js publishes
+           --nav-sos-bottom so it always sits clear of the stack. -->
+      <div class="nav__sos" id="navSos">
+        <button class="panic__btn panic__btn--sm" id="navPanicBtn" type="button"
+                aria-label="Send emergency alert, hold to confirm" aria-describedby="navPanicHelp">
+          <svg class="panic__ring" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            <circle cx="50" cy="50" r="48" class="panic__track"></circle>
+            <circle cx="50" cy="50" r="48" stroke-dasharray="301.6" stroke-dashoffset="301.6" id="navPanicRing" class="panic__progress"></circle>
+          </svg>
+          <span class="panic__face" aria-hidden="true">
+            <span class="panic__word">SOS</span>
+            <span class="panic__hint" id="navPanicLabel">Hold</span>
+          </span>
+        </button>
+        <p id="navPanicHelp" class="sr-only">Press and hold for one and a half seconds. Your area-level location is sent to your trusted circle.</p>
+        <div class="nav__panicResult" id="navPanicResult" role="status" aria-live="assertive"></div>
       </div>
 
       <!-- bottom panel -->
