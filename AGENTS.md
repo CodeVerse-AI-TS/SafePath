@@ -364,6 +364,31 @@ SafePath works with no account. Everything below exists to keep it that way.
   write at load invalidates style for the whole document and can disturb the
   entry animation.
 
+## Hero route-preview video
+
+- **The Overview hero panel plays `public/safepath-hero.mp4`, not the drawn
+  grid.** `.hero__map` holds a looping muted `<video>`; the decorative grid,
+  route curve and A/B markers are still in the markup but hidden inside
+  `.sp-hero-video__fallback`.
+- **The fallback is shown, not created.** A missing clip and a
+  `prefers-reduced-motion` visitor both reveal the existing illustration. Do not
+  delete the `.hero__road` / `.hero__routeLine` / `.hero__marker` markup — it is
+  the fallback.
+- **The script reads the video's state, it does not only listen for `error`.**
+  It runs at the end of `<body>`, so a clip that fails immediately (404, blocked
+  request) has already fired `error` before the listener attaches. `assess()`
+  checks `video.error` / `networkState` / `readyState` on load for this reason.
+- **The panel's z-index order is video 0, scrim 1, label 2, fallback 3**, with
+  the floating `.hero-card`s above at 4. The label was already 2, so the scrim
+  sits at 1 to stay under it.
+- **The scrim is a flat 35% wash plus a deeper band across the top.** The label
+  is 10px pale green and drops to ~1.8:1 over a bright frame with a flat wash
+  alone; the top gradient holds it above 4.5:1. Re-measure if you change the
+  clip, since the numbers depend on the footage.
+- **Do not add a light-theme variant of the scrim.** The clip has an opaque
+  background, so the overlay is only contrast control, not a theme tint. The
+  light layer already restyles the panel border and background.
+
 ## Testing notes
 
 - **`main` has `animation:fadeUp .5s`, and a tab click only flips `hidden`.**
